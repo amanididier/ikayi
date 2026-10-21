@@ -13,6 +13,11 @@ export function Shell({ children }: { children: ReactNode }) {
   const [online, setOnline] = useState(true);
   const [authed, setAuthed] = useState(false);
   const [checking, setChecking] = useState(true);
+  const isLanding =
+    path === "/welcome" ||
+    path.startsWith("/welcome/") ||
+    path === "/install-android" ||
+    path.startsWith("/install-android/");
 
   useEffect(() => {
     setOnline(navigator.onLine);
@@ -49,6 +54,10 @@ export function Shell({ children }: { children: ReactNode }) {
     { to: "/i-owe" as const, label: t("iOwe"), icon: ArrowUpRight },
     { to: "/settings" as const, label: t("settings"), icon: Settings },
   ];
+
+  if (isLanding) {
+    return <>{children}</>;
+  }
 
   if (checking) {
     return (
