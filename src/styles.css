@@ -124,7 +124,12 @@
   &::-webkit-scrollbar { display: none; }
 }
 
-.app-shell { max-width: 448px; min-height: 100dvh; margin: 0 auto; }
+.app-shell {
+  max-width: 448px;
+  min-height: 100dvh;
+  margin: 0 auto;
+  padding-bottom: env(safe-area-inset-bottom);
+}
 .app-header {
   position: sticky; top: 0; z-index: 30;
   display: flex; align-items: center; justify-content: space-between; gap: 12px;
@@ -132,31 +137,53 @@
 }
 .bottom-nav {
   position: fixed;
-  bottom: max(16px, env(safe-area-inset-bottom));
+  bottom: max(12px, env(safe-area-inset-bottom));
   left: 50%; transform: translateX(-50%);
   z-index: 40;
   display: flex; align-items: center; gap: 4px;
-  width: calc(100% - 32px); max-width: 384px;
+  width: calc(100% - 24px); max-width: 384px;
   padding: 6px; border-radius: 9999px;
   background: var(--ink); box-shadow: var(--shadow-card);
 }
 .auth-overlay {
   position: fixed; inset: 0; z-index: 60;
-  display: flex; align-items: center; justify-content: center;
-  padding: 20px; background: var(--overlay); backdrop-filter: blur(3px);
+  display: flex; align-items: flex-end; justify-content: center;
+  padding: max(12px, env(safe-area-inset-top)) max(12px, env(safe-area-inset-right)) max(12px, env(safe-area-inset-bottom)) max(12px, env(safe-area-inset-left));
+  background: var(--overlay); backdrop-filter: blur(3px);
+}
+@media (min-width: 480px) {
+  .auth-overlay { align-items: center; }
 }
 .auth-card {
   width: 100%; max-width: 384px;
-  max-height: calc(100dvh - 40px);
+  max-height: min(92dvh, calc(100dvh - 24px));
   overflow-y: auto;
   scrollbar-width: none;
   -ms-overflow-style: none;
   background: var(--card);
-  padding: 28px 24px;
-  border-radius: 24px;
+  padding: 20px 18px max(24px, env(safe-area-inset-bottom));
+  border-radius: 20px 20px 16px 16px;
   box-shadow: var(--shadow-card);
 }
+@media (min-width: 480px) {
+  .auth-card {
+    border-radius: 24px;
+    padding: 28px 24px;
+  }
+}
 .auth-card::-webkit-scrollbar { display: none; width: 0; height: 0; }
+
+[data-vaul-drawer][data-vaul-drawer-direction="bottom"] {
+  max-height: min(92dvh, 100%);
+  padding-bottom: max(12px, env(safe-area-inset-bottom));
+}
+
+input, textarea, select, button {
+  font-size: 16px;
+}
+@media (min-width: 640px) {
+  input, textarea, select, button { font-size: inherit; }
+}
 
 @media (prefers-reduced-motion: reduce) {
   * {
