@@ -32,7 +32,18 @@ jobs:
           java-version: "21"
 
       - name: Install JavaScript dependencies
-        run: npm install --no-audit --no-fund --legacy-peer-deps
+        env:
+          npm_config_fetch_retries: "5"
+          npm_config_fetch_retry_mintimeout: "20000"
+          npm_config_fetch_retry_maxtimeout: "120000"
+          npm_config_fetch_timeout: "300000"
+        run: |
+          for i in 1 2 3; do
+            npm install --no-audit --no-fund --legacy-peer-deps && exit 0
+            echo "npm install failed (attempt $i), retrying..."
+            sleep $((i * 15))
+          done
+          exit 1
 
       - name: Build the bundled native web app
         run: npm run build:native
@@ -55,7 +66,6 @@ jobs:
 
           out = Path("assets")
           out.mkdir(exist_ok=True)
-          # Prefer logo, then public favicon
           for candidate in (
               Path("src/assets/ikayi-logo.png"),
               Path("public/favicon.png"),
@@ -70,12 +80,10 @@ jobs:
               draw.ellipse((64, 64, 448, 448), fill=(230, 120, 40, 255))
 
           source.resize((1024, 1024), Image.Resampling.LANCZOS).save(out / "icon-only.png")
-
           foreground = Image.new("RGBA", (1024, 1024), (0, 0, 0, 0))
           mark = source.resize((900, 900), Image.Resampling.LANCZOS)
           foreground.alpha_composite(mark, ((1024 - mark.width) // 2, (1024 - mark.height) // 2))
           foreground.save(out / "icon-foreground.png")
-
           Image.new("RGBA", (1024, 1024), "#FAF8F5").save(out / "icon-background.png")
 
           splash = Image.new("RGBA", (2732, 2732), "#FAF8F5")
@@ -91,8 +99,22 @@ jobs:
           draw.text(((2732 - (bounds[2] - bounds[0])) // 2, 1730), label, fill="#382B24", font=font)
           splash.save(out / "splash.png")
           splash.save(out / "splash-dark.png")
+
+          # Write default Android mipmap-ish icon into res if present after cap add
+          android_res = Path("android/app/src/main/res")
+          if android_res.exists():
+              for folder, size in [
+                  ("mipmap-mdpi", 48),
+                  ("mipmap-hdpi", 72),
+                  ("mipmap-xhdpi", 96),
+                  ("mipmap-xxhdpi", 144),
+                  ("mipmap-xxxhdpi", 192),
+              ]:
+                  d = android_res / folder
+                  d.mkdir(parents=True, exist_ok=True)
+                  source.resize((size, size), Image.Resampling.LANCZOS).save(d / "ic_launcher.png")
+                  source.resize((size, size), Image.Resampling.LANCZOS).save(d / "ic_launcher_round.png")
           PY
-          npx capacitor-assets generate --android --assetPath assets --iconBackgroundColor "#FAF8F5" --splashBackgroundColor "#FAF8F5" || true
 
       - name: Copy bundled app into Android project
         run: npx cap sync android
