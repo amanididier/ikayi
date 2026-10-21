@@ -64,24 +64,32 @@ export function AuthCard({ onAuthed, onOffline }: { onAuthed: () => void; onOffl
 
   return (
     <div className="auth-overlay">
-      <section className="auth-card no-scrollbar" role="dialog" aria-modal="true" aria-label={rw ? "Injira muri Ikayi" : "Sign in to Ikayi"}>
-        <img src={logo} alt="Ikayi" className="mx-auto size-20 rounded-2xl" />
-        <h2 className="mt-5 text-center text-2xl font-bold">
-          {mode === "login" ? (rw ? "Murakaza neza kuri Ikayi" : "Welcome to Ikayi") : rw ? "Fungura konti ya Ikayi" : "Create your Ikayi account"}
+      <section className="auth-card no-scrollbar" role="dialog" aria-modal="true" aria-label={rw ? "Injira muri Ikayi Yange" : "Sign in to Ikayi Yange"}>
+        <img src={logo} alt="Ikayi Yange" className="mx-auto size-20 rounded-2xl" />
+        <h2 className="mt-4 text-center text-xl font-bold sm:mt-5 sm:text-2xl">
+          {mode === "login"
+            ? rw
+              ? "Murakaza neza kuri Ikayi Yange"
+              : "Welcome to Ikayi Yange"
+            : rw
+              ? "Fungura konti ya Ikayi Yange"
+              : "Create your Ikayi Yange account"}
         </h2>
-        <p className="mb-6 mt-2 text-center text-sm text-muted-foreground">{rw ? "Ikayi y'amadeni yawe" : "Your personal credit book"}</p>
+        <p className="mb-5 mt-2 text-center text-sm text-muted-foreground">
+          {rw ? "Ikayi Yange · amadeni yawe" : "Ikayi Yange · your credit book"}
+        </p>
 
         {ask ? (
           <div className="space-y-4">
-            <p className="text-center font-semibold">{rw ? "Uri mushya kuri Ikayi?" : "New to Ikayi?"}</p>
+            <p className="text-center font-semibold">{rw ? "Uri mushya kuri Ikayi Yange?" : "New to Ikayi Yange?"}</p>
             <p className="text-center text-xs text-muted-foreground">
               {rw ? "Nta konti yabonetse. Uri gushaka kwiyandikisha?" : "No account found. Would you like to sign up?"}
             </p>
             <div className="grid grid-cols-2 gap-3">
-              <Button variant="outline" className="h-11 rounded-full" onClick={() => setAsk(false)}>
+              <Button variant="outline" className="h-12 rounded-full" onClick={() => setAsk(false)}>
                 {rw ? "Oya" : "No"}
               </Button>
-              <Button className="h-11 rounded-full" onClick={() => { setAsk(false); setMode("signup"); }}>
+              <Button className="h-12 rounded-full" onClick={() => { setAsk(false); setMode("signup"); }}>
                 {rw ? "Yego" : "Yes"}
               </Button>
             </div>
@@ -90,7 +98,15 @@ export function AuthCard({ onAuthed, onOffline }: { onAuthed: () => void; onOffl
           <form className="space-y-4" onSubmit={submit}>
             <div className="grid grid-cols-2 gap-1 rounded-full bg-muted p-1" role="tablist">
               {(["phone", "email"] as const).map((k) => (
-                <Button key={k} type="button" role="tab" aria-selected={tab === k} variant="ghost" className={`h-10 rounded-full ${tab === k ? "bg-card text-primary shadow-card" : "text-muted-foreground"}`} onClick={() => setTab(k)}>
+                <Button
+                  key={k}
+                  type="button"
+                  role="tab"
+                  aria-selected={tab === k}
+                  variant="ghost"
+                  className={`h-11 rounded-full ${tab === k ? "bg-card text-primary shadow-card" : "text-muted-foreground"}`}
+                  onClick={() => setTab(k)}
+                >
                   {k === "phone" ? <Phone className="size-4" /> : <Mail className="size-4" />}
                   {t(k)}
                 </Button>
@@ -99,32 +115,62 @@ export function AuthCard({ onAuthed, onOffline }: { onAuthed: () => void; onOffl
 
             <label className="block space-y-1.5 text-sm font-medium">
               {t(tab)}
-              <Input type={tab === "phone" ? "tel" : "email"} autoComplete="username" required value={identifier} onChange={(e) => setIdentifier(e.target.value)} className="h-12 rounded-xl" placeholder={tab === "phone" ? "07•• ••• •••" : "izina@example.com"} />
+              <Input
+                type={tab === "phone" ? "tel" : "email"}
+                autoComplete="username"
+                required
+                value={identifier}
+                onChange={(e) => setIdentifier(e.target.value)}
+                className="h-12 rounded-xl text-base"
+                placeholder={tab === "phone" ? "07•• ••• •••" : "izina@example.com"}
+              />
             </label>
 
             <label className="block space-y-1.5 text-sm font-medium">
               {t("password")}
               <div className="relative">
-                <Input type={show ? "text" : "password"} autoComplete={mode === "login" ? "current-password" : "new-password"} required minLength={MIN_PASSWORD} value={password} onChange={(e) => setPassword(e.target.value)} className="h-12 rounded-xl pr-12" placeholder={rw ? `Byibuze ${MIN_PASSWORD}` : `At least ${MIN_PASSWORD}`} />
-                <button type="button" className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground" onClick={() => setShow((s) => !s)} aria-label={show ? "Hide" : "Show"}>
+                <Input
+                  type={show ? "text" : "password"}
+                  autoComplete={mode === "login" ? "current-password" : "new-password"}
+                  required
+                  minLength={MIN_PASSWORD}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="h-12 rounded-xl pr-12 text-base"
+                  placeholder={rw ? `Byibuze ${MIN_PASSWORD}` : `At least ${MIN_PASSWORD}`}
+                />
+                <button
+                  type="button"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 p-1 text-muted-foreground"
+                  onClick={() => setShow((s) => !s)}
+                  aria-label={show ? "Hide" : "Show"}
+                >
                   {show ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
                 </button>
               </div>
             </label>
 
-            <Button type="submit" disabled={busy} className="h-12 w-full rounded-full">
+            <Button type="submit" disabled={busy} className="h-12 w-full rounded-full text-base">
               {busy ? t("pleaseWait") : mode === "login" ? t("signIn") : t("signUp")}
               <ArrowRight className="size-4" />
             </Button>
 
-            <button type="button" className="w-full text-center text-xs text-muted-foreground underline-offset-2 hover:underline" onClick={() => setMode(mode === "login" ? "signup" : "login")}>
+            <button
+              type="button"
+              className="w-full py-2 text-center text-xs text-muted-foreground underline-offset-2 hover:underline"
+              onClick={() => setMode(mode === "login" ? "signup" : "login")}
+            >
               {mode === "login"
-                ? rw ? "Uri mushya? Fungura konti" : "New here? Create an account"
-                : rw ? "Usanzwe ufite konti? Injira" : "Already have an account? Sign in"}
+                ? rw
+                  ? "Uri mushya? Fungura konti"
+                  : "New here? Create an account"
+                : rw
+                  ? "Usanzwe ufite konti? Injira"
+                  : "Already have an account? Sign in"}
             </button>
 
             {onOffline && (
-              <Button type="button" variant="ghost" className="w-full rounded-full text-xs" onClick={onOffline}>
+              <Button type="button" variant="ghost" className="h-11 w-full rounded-full text-xs" onClick={onOffline}>
                 {rw ? "Komeza kuri iyi telefone gusa" : "Continue on this device only"}
               </Button>
             )}
@@ -133,7 +179,7 @@ export function AuthCard({ onAuthed, onOffline }: { onAuthed: () => void; onOffl
 
         <p className="mt-6 flex items-center justify-center gap-1.5 text-[11px] text-muted-foreground">
           <ShieldCheck className="size-3.5" />
-          Ikayi · {rw ? "Amadeni yawe" : "Your credit book"}
+          Ikayi Yange · {rw ? "Amadeni yawe" : "Your credit book"}
         </p>
       </section>
     </div>
