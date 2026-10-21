@@ -1,6 +1,6 @@
 /**
- * Ikayi auth — same Supabase project as Stoke Yange.
- * Phone accounts use a synthetic email so one password auth path works.
+ * Ikayi Yange auth — phone uses synthetic email for one password path.
+ * Works online (Supabase) and offline (local account flag).
  */
 import { ensureSupabase, supabaseConfigured } from "@/lib/supabase";
 
@@ -70,51 +70,31 @@ export async function signUp(opts: {
   const client = await ensureSupabase();
   const email = opts.loginType === "email" ? id : syntheticEmail(id);
 
-  if (!supabaseConfigured || !client) {
+  // Offline or no cloud: local-only account
+  if (!supabaseConfigured || !client || !navigator.onLine) {
     saveAccount({ loginType: opts.loginType, identifier: id, createdAt: Date.now() });
     setLoggedIn(true);
     return { ok: true };
   }
 
-  if (!navigator.onLine) {
-    saveAccount({ loginType: opts.loginType, identifier: id, createdAt: Date.now() });
-    setLoggedIn(true);
-    return { ok: true };
-  }
-
-  const { data, error } = await client.auth.signUp({
-    email,
-    password: opts.password,
-    options: {
-      data: { login_type: opts.loginType, identifier: id, app: "ikayi" },
-      emailRedirectTo: typeof window !== "undefined" ? window.location.origin : undefined,
-    },
-  });
-
+  const { data, error } = await client.auth.signUp({ email, password: opts.password });
   if (error) {
-    if (/already registered|already been registered|user already exists/i.test(error.message)) {
+    if (/already registered|already been registered|user already/i.test(error.message)) {
       return { ok: false, error: "exists", detail: error.message };
     }
     return { ok: false, error: "signup_failed", detail: error.message };
   }
-
-  const uid = data.user?.id ?? data.session?.user?.id;
-  saveAccount({
-    loginType: opts.loginType,
-    identifier: id,
-    supabaseUserId: uid,
-    createdAt: Date.now(),
-  });
-
-  if (data.session) {
+  if (data.user) {
+    saveAccount({
+      loginType: opts.loginType,
+      identifier: id,
+      supabaseUserId: data.user.id,
+      createdAt: Date.now(),
+    });
     setLoggedIn(true);
     return { ok: true };
   }
-
-  const login = await signIn({ loginType: opts.loginType, identifier: opts.identifier, password: opts.password });
-  if (login.ok) return { ok: true };
-  setLoggedIn(true);
-  return { ok: true };
+  return { ok: false, error: "signup_failed" };
 }
 
 export async function signIn(opts: {
@@ -131,13 +111,14 @@ export async function signIn(opts: {
   if (supabaseConfigured && client && navigator.onLine) {
     const { data, error } = await client.auth.signInWithPassword({ email, password: opts.password });
     if (error) {
-      if (/invalid login credentials|invalid credentials/i.test(error.message)) {
-        return { ok: false, error: "no_account", detail: error.message };
+      // Same Supabase message for wrong password AND unknown user — never force signup UI
+      if (/invalid login credentials|invalid credentials|wrong password|user not found/i.test(error.message)) {
+        return { ok: false, error: "wrong_credentials", detail: error.message };
       }
       if (/email not confirmed/i.test(error.message)) {
         return { ok: false, error: "confirmation_required", detail: error.message };
       }
-      return { ok: false, error: "bad_password", detail: error.message };
+      return { ok: false, error: "wrong_credentials", detail: error.message };
     }
     if (data.session?.user) {
       saveAccount({
@@ -151,6 +132,7 @@ export async function signIn(opts: {
     }
   }
 
+  // Offline: match local account only
   const account = getAccount();
   if (!account) return { ok: false, error: "no_account" };
   if (account.loginType !== opts.loginType || account.identifier !== id) {
