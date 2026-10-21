@@ -29,15 +29,36 @@ export function AuthCard({ onAuthed, onOffline }: { onAuthed: () => void; onOffl
           onAuthed();
           return;
         }
-        if (res.error === "no_account" || res.error === "mismatch") {
-          setAsk(true);
+        if (res.error === "wrong_credentials" || res.error === "bad_password") {
+          toast.error(
+            rw
+              ? "Telefone/email cyangwa ijambo ry'ibanga ntabwo ari byo"
+              : "Wrong phone/email or password",
+          );
           return;
         }
         if (res.error === "confirmation_required") {
           toast.error(rw ? "Emeza email yawe mbere" : "Confirm your email first");
           return;
         }
-        toast.error(rw ? "Telefone/email cyangwa ijambo ry'ibanga ntabwo ari byo" : "Wrong phone/email or password");
+        // Offline only: no local account — offer signup without forcing online users
+        if (res.error === "no_account" || res.error === "mismatch") {
+          if (!navigator.onLine) {
+            setAsk(true);
+            return;
+          }
+          toast.error(
+            rw
+              ? "Ntabwo winjiye. Gerageza ijambo ry'ibanga cyangwa fungura konti nshya"
+              : "Could not sign in. Check password or create a new account",
+          );
+          return;
+        }
+        toast.error(
+          rw
+            ? "Telefone/email cyangwa ijambo ry'ibanga ntabwo ari byo"
+            : "Wrong phone/email or password",
+        );
         return;
       }
 
@@ -53,7 +74,11 @@ export function AuthCard({ onAuthed, onOffline }: { onAuthed: () => void; onOffl
         return;
       }
       if (res.error === "bad_password") {
-        toast.error(rw ? `Ijambo ry'ibanga rigomba kuba byibuze inyuguti ${MIN_PASSWORD}` : `Password must be at least ${MIN_PASSWORD} characters`);
+        toast.error(
+          rw
+            ? `Ijambo ry'ibanga rigomba kuba byibuze inyuguti ${MIN_PASSWORD}`
+            : `Password must be at least ${MIN_PASSWORD} characters`,
+        );
         return;
       }
       toast.error(res.detail || (rw ? "Kwiyandikisha byanze" : "Sign up failed"));
@@ -64,7 +89,12 @@ export function AuthCard({ onAuthed, onOffline }: { onAuthed: () => void; onOffl
 
   return (
     <div className="auth-overlay">
-      <section className="auth-card no-scrollbar" role="dialog" aria-modal="true" aria-label={rw ? "Injira muri Ikayi Yange" : "Sign in to Ikayi Yange"}>
+      <section
+        className="auth-card no-scrollbar"
+        role="dialog"
+        aria-modal="true"
+        aria-label={rw ? "Injira muri Ikayi Yange" : "Sign in to Ikayi Yange"}
+      >
         <img src={logo} alt="Ikayi Yange" className="mx-auto size-20 rounded-2xl" />
         <h2 className="mt-4 text-center text-xl font-bold sm:mt-5 sm:text-2xl">
           {mode === "login"
@@ -81,15 +111,25 @@ export function AuthCard({ onAuthed, onOffline }: { onAuthed: () => void; onOffl
 
         {ask ? (
           <div className="space-y-4">
-            <p className="text-center font-semibold">{rw ? "Uri mushya kuri Ikayi Yange?" : "New to Ikayi Yange?"}</p>
+            <p className="text-center font-semibold">
+              {rw ? "Uri mushya kuri Ikayi Yange?" : "New to Ikayi Yange?"}
+            </p>
             <p className="text-center text-xs text-muted-foreground">
-              {rw ? "Nta konti yabonetse. Uri gushaka kwiyandikisha?" : "No account found. Would you like to sign up?"}
+              {rw
+                ? "Nta konti yabonetse. Uri gushaka kwiyandikisha?"
+                : "No account found. Would you like to sign up?"}
             </p>
             <div className="grid grid-cols-2 gap-3">
               <Button variant="outline" className="h-12 rounded-full" onClick={() => setAsk(false)}>
                 {rw ? "Oya" : "No"}
               </Button>
-              <Button className="h-12 rounded-full" onClick={() => { setAsk(false); setMode("signup"); }}>
+              <Button
+                className="h-12 rounded-full"
+                onClick={() => {
+                  setAsk(false);
+                  setMode("signup");
+                }}
+              >
                 {rw ? "Yego" : "Yes"}
               </Button>
             </div>
@@ -104,7 +144,9 @@ export function AuthCard({ onAuthed, onOffline }: { onAuthed: () => void; onOffl
                   role="tab"
                   aria-selected={tab === k}
                   variant="ghost"
-                  className={`h-11 rounded-full ${tab === k ? "bg-card text-primary shadow-card" : "text-muted-foreground"}`}
+                  className={`h-11 rounded-full ${
+                    tab === k ? "bg-card text-primary shadow-card" : "text-muted-foreground"
+                  }`}
                   onClick={() => setTab(k)}
                 >
                   {k === "phone" ? <Phone className="size-4" /> : <Mail className="size-4" />}
