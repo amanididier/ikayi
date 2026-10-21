@@ -5,7 +5,8 @@ import { Button } from "@/components/ui/button";
 import { Drawer, DrawerContent, DrawerDescription, DrawerHeader, DrawerTitle } from "@/components/ui/drawer";
 import { clearDevice } from "@/lib/credit-db";
 import { getAccount, signOutLocal } from "@/lib/auth";
-import { ensureSupabase, supabaseConfigured } from "@/lib/supabase";
+import { supabaseConfigured } from "@/lib/supabase";
+import { fullSync } from "@/lib/sync";
 import { useI18n } from "@/lib/i18n";
 
 export function SettingsPage() {
@@ -24,21 +25,22 @@ export function SettingsPage() {
   const syncNow = async () => {
     setSyncing(true);
     try {
-      const client = await ensureSupabase();
-      if (!supabaseConfigured || !client) {
-        toast.message(rw ? "Cloud ntirahuzwa kuri iyi build" : "Cloud is not configured on this build");
+      if (!supabaseConfigured) {
+        toast.message(rw ? "Shyiramo VITE_SUPABASE_URL n'ANON_KEY kuri Vercel" : "Set VITE_SUPABASE_URL and ANON_KEY on Vercel");
         return;
       }
       if (!navigator.onLine) {
         toast.error(rw ? "Nta interineti" : "You are offline");
         return;
       }
-      const { data } = await client.auth.getSession();
-      if (!data.session) {
+      const result = await fullSync();
+      if (result.ok) {
+        toast.success(rw ? "Amadeni yahujwe (upload + download)" : "Credits synced (upload + download)");
+      } else if (result.reason === "no_session") {
         toast.message(rw ? "Injira mbere yo gukora sync" : "Sign in before syncing");
-        return;
+      } else {
+        toast.error(rw ? `Sync yanze: ${result.reason}` : `Sync failed: ${result.reason}`);
       }
-      toast.success(rw ? "Konti ya cloud irakora. Sync y'amadeni iraza vuba." : "Cloud account is live. Full credit sync is next.");
     } finally {
       setSyncing(false);
     }
@@ -56,9 +58,7 @@ export function SettingsPage() {
       <div className="pt-2">
         <p className="mb-1 text-xs font-medium text-muted-foreground">{t("settings")}</p>
         <h2 className="text-2xl font-bold">{rw ? "Igenamiterere" : "Settings"}</h2>
-        {account && (
-          <p className="mt-1 truncate text-xs text-muted-foreground">{account.identifier}</p>
-        )}
+        {account && <p className="mt-1 truncate text-xs text-muted-foreground">{account.identifier}</p>}
       </div>
 
       <section className="rounded-2xl border bg-card p-4 shadow-card">
@@ -71,11 +71,11 @@ export function SettingsPage() {
             <p className="text-xs text-muted-foreground">
               {supabaseConfigured
                 ? rw
-                  ? "Konti yawe ikoresha Supabase (nk'uko Stoke Yange)."
-                  : "Uses the same Supabase project as Stoke Yange."
+                  ? "Upload + download amadeni kuri telefone zose za konti.")
+                  : "Upload + download credits on every phone for this account."
                 : rw
-                  ? "Shyiramo VITE_SUPABASE_ANON_KEY kuri Vercel."
-                  : "Set VITE_SUPABASE_ANON_KEY on Vercel."}
+                  ? "Shyiramo VITE_SUPABASE_URL n'ANON_KEY kuri Vercel."
+                  : "Set VITE_SUPABASE_URL and ANON_KEY on Vercel."}
             </p>
           </div>
         </div>
