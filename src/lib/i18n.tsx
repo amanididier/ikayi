@@ -120,6 +120,13 @@ const I18nContext = createContext<{
   t: (key: DictKey) => string;
 } | null>(null);
 
+/** WhatsApp / SMS reminder body (debtors). */
+export function reminderText(lang: Lang, name: string, amount: string, shop: string) {
+  return lang === "rw"
+    ? `Muraho ${name}, turabibutsa ko mufite ideni rya ${amount} muri ${shop}. Murakoze cyane!`
+    : `Hello ${name}, a friendly reminder that you have a balance of ${amount} at ${shop}. Thank you!`;
+}
+
 const LANG_KEY = "iy-lang";
 
 export function I18nProvider({ children }: { children: ReactNode }) {
