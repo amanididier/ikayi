@@ -23,7 +23,7 @@ export const Route = createFileRoute("/")({
 /**
  * Shared link https://ikayi-yange.vercel.app/
  * - Browser (not installed): → landing /welcome
- * - Installed PWA or "Open app": → credit book (never marketing again)
+ * - Installed APK / PWA / "Open app": → credit book (never marketing again)
  */
 function RootEntry() {
   const navigate = useNavigate();
@@ -36,6 +36,7 @@ function RootEntry() {
       return;
     }
     if (isAppMode()) {
+      enterAppMode();
       setShowApp(true);
       return;
     }

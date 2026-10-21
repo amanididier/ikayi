@@ -2,11 +2,11 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { Shell } from "@/components/ikayi/Shell";
 import { CreditBook } from "@/components/ikayi/CreditBook";
-import { isAppMode } from "@/lib/app-mode";
+import { enterAppMode, isAppMode } from "@/lib/app-mode";
 
 export const Route = createFileRoute("/i-owe")({
   head: () => ({
-    meta: [{ title: "Ikayi Yange — Abo mubereyemo" }],
+    meta: [{ title: "Ikayi Yange — Abo ndimo amadeni" }],
   }),
   component: IOweEntry,
 });
@@ -17,6 +17,7 @@ function IOweEntry() {
 
   useEffect(() => {
     if (isAppMode()) {
+      enterAppMode();
       setShowApp(true);
       return;
     }
