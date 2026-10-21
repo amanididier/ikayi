@@ -63,7 +63,7 @@ export function Shell({ children }: { children: ReactNode }) {
     return (
       <div className="app-shell flex min-h-dvh flex-col items-center justify-center">
         <img src={logo} alt="" className="mb-4 size-16 rounded-2xl" />
-        <p className="text-sm font-semibold">Ikayi</p>
+        <p className="text-sm font-semibold">Ikayi Yange</p>
         <p className="mt-2 text-xs text-muted-foreground">{lang === "rw" ? "Tegereza…" : "Loading…"}</p>
       </div>
     );
@@ -75,7 +75,7 @@ export function Shell({ children }: { children: ReactNode }) {
         <div className="flex min-w-0 items-center gap-3">
           <img src={logo} alt="" className="size-11 rounded-xl" />
           <div>
-            <h1 className="text-xl font-bold">Ikayi</h1>
+            <h1 className="text-xl font-bold">Ikayi Yange</h1>
             <p className="flex items-center gap-1 text-[11px] text-muted-foreground">
               {online ? <Wifi className="size-3 text-success" /> : <WifiOff className="size-3" />}
               {t(online ? "online" : "offline")} · {lang === "rw" ? "Kuri iyi telefone" : "On this device"}
