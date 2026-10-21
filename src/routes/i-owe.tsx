@@ -1,4 +1,32 @@
-import { createFileRoute } from '@tanstack/react-router';
-import { Shell } from '@/components/ikayi/Shell';
-import { CreditBook } from '@/components/ikayi/CreditBook';
-export const Route=createFileRoute('/i-owe')({head:()=>({meta:[{title:'Abo mbereyemo amadeni — Ikayi'},{name:'description',content:'Andika amadeni ugomba kwishyura n’ubwishyu bwawe muri Ikayi.'},{property:'og:title',content:'Abo mbereyemo amadeni — Ikayi'},{property:'og:description',content:'Bika amadeni ugomba kwishyura muri Ikayi.'},{property:'og:type',content:'website'},{name:'twitter:card',content:'summary_large_image'}]}),component:()=> <Shell><CreditBook kind="supplier"/></Shell>});
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { useEffect, useState } from "react";
+import { Shell } from "@/components/ikayi/Shell";
+import { CreditBook } from "@/components/ikayi/CreditBook";
+import { isAppMode } from "@/lib/app-mode";
+
+export const Route = createFileRoute("/i-owe")({
+  head: () => ({
+    meta: [{ title: "Ikayi Yange — Abo mubereyemo" }],
+  }),
+  component: IOweEntry,
+});
+
+function IOweEntry() {
+  const navigate = useNavigate();
+  const [showApp, setShowApp] = useState(false);
+
+  useEffect(() => {
+    if (isAppMode()) {
+      setShowApp(true);
+      return;
+    }
+    navigate({ to: "/welcome", replace: true });
+  }, [navigate]);
+
+  if (!showApp) return null;
+  return (
+    <Shell>
+      <CreditBook kind="supplier" />
+    </Shell>
+  );
+}

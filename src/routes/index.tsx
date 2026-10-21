@@ -1,4 +1,52 @@
-import { createFileRoute } from '@tanstack/react-router';
-import { Shell } from '@/components/ikayi/Shell';
-import { CreditBook } from '@/components/ikayi/CreditBook';
-export const Route=createFileRoute('/')({head:()=>({meta:[{title:'Ikayi — Abarimo amadeni'},{name:'description',content:'Ikayi: bika amadeni, ubwishyu n’amakuru y’abakubereyemo amadeni.'},{property:'og:title',content:'Ikayi — Abarimo amadeni'},{property:'og:description',content:'Ikayi yawe y’amadeni n’ubwishyu.'},{property:'og:type',content:'website'},{name:'twitter:card',content:'summary_large_image'}]}),component:()=> <Shell><CreditBook kind="customer"/></Shell>});
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { useEffect, useState } from "react";
+import { Shell } from "@/components/ikayi/Shell";
+import { CreditBook } from "@/components/ikayi/CreditBook";
+import { enterAppMode, isAppMode } from "@/lib/app-mode";
+
+export const Route = createFileRoute("/")({
+  head: () => ({
+    meta: [
+      { title: "Ikayi Yange" },
+      {
+        name: "description",
+        content: "Ikayi Yange: andika amadeni, ubwishyu, cloud sync. Shyiramo app cyangwa fungura.",
+      },
+      { property: "og:title", content: "Ikayi Yange — Ikayi y'amadeni" },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
+    ],
+  }),
+  component: RootEntry,
+});
+
+/**
+ * Shared link https://ikayi-yange.vercel.app/
+ * - Browser (not installed): → landing /welcome
+ * - Installed PWA or "Open app": → credit book (never marketing again)
+ */
+function RootEntry() {
+  const navigate = useNavigate();
+  const [showApp, setShowApp] = useState(false);
+
+  useEffect(() => {
+    if (typeof window !== "undefined" && window.location.hash.includes("type=recovery")) {
+      enterAppMode();
+      setShowApp(true);
+      return;
+    }
+    if (isAppMode()) {
+      setShowApp(true);
+      return;
+    }
+    navigate({ to: "/welcome", replace: true });
+  }, [navigate]);
+
+  if (!showApp) return null;
+
+  return (
+    <Shell>
+      <CreditBook kind="customer" />
+    </Shell>
+  );
+}
