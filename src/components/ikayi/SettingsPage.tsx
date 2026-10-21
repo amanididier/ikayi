@@ -71,7 +71,7 @@ export function SettingsPage() {
             <p className="text-xs text-muted-foreground">
               {supabaseConfigured
                 ? rw
-                  ? "Upload + download amadeni kuri telefone zose za konti.")
+                  ? "Upload + download amadeni kuri telefone zose za konti."
                   : "Upload + download credits on every phone for this account."
                 : rw
                   ? "Shyiramo VITE_SUPABASE_URL n'ANON_KEY kuri Vercel."
