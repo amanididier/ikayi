@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 import logo from "@/assets/ikayi-logo.png";
 import { cn } from "@/lib/utils";
+import { enterAppMode } from "@/lib/app-mode";
 
 export const Route = createFileRoute("/welcome")({
   head: () => ({
@@ -128,7 +129,10 @@ function WelcomePage() {
     document.documentElement.lang = lang;
   }, [lang]);
 
-  const goApp = () => navigate({ to: "/" });
+  const goApp = () => {
+    enterAppMode();
+    navigate({ to: "/" });
+  };
 
   const features = [
     { icon: BookUser, title: t.f1t, body: t.f1d, tone: "bg-orange-50 text-orange-600" },
@@ -153,16 +157,10 @@ function WelcomePage() {
           </div>
           <div className="flex shrink-0 items-center gap-2">
             <div className="flex items-center gap-0.5 rounded-full border bg-white p-0.5 shadow-sm" aria-label={t.lang}>
-              <button type="button" onClick={() => setLang("en")} className={cn("rounded-full px-2.5 py-1 text-[11px] font-bold", lang === "en" ? "bg-primary text-primary-foreground" : "text-muted-foreground")}>
-                EN
-              </button>
-              <button type="button" onClick={() => setLang("rw")} className={cn("rounded-full px-2.5 py-1 text-[11px] font-bold", lang === "rw" ? "bg-primary text-primary-foreground" : "text-muted-foreground")}>
-                RW
-              </button>
+              <button type="button" onClick={() => setLang("en")} className={cn("rounded-full px-2.5 py-1 text-[11px] font-bold", lang === "en" ? "bg-primary text-primary-foreground" : "text-muted-foreground")}>EN</button>
+              <button type="button" onClick={() => setLang("rw")} className={cn("rounded-full px-2.5 py-1 text-[11px] font-bold", lang === "rw" ? "bg-primary text-primary-foreground" : "text-muted-foreground")}>RW</button>
             </div>
-            <button type="button" onClick={goApp} className="hidden h-9 items-center rounded-full bg-primary px-3 text-[11px] font-bold text-primary-foreground sm:inline-flex">
-              {t.open}
-            </button>
+            <button type="button" onClick={goApp} className="hidden h-9 items-center rounded-full bg-primary px-3 text-[11px] font-bold text-primary-foreground sm:inline-flex">{t.open}</button>
           </div>
         </div>
       </header>
@@ -170,9 +168,7 @@ function WelcomePage() {
       <section className="mx-auto max-w-5xl px-4 pb-10 pt-8 sm:px-6 sm:pt-14">
         <p className="text-xs font-semibold uppercase tracking-wide text-primary">Ikayi Yange</p>
         <h1 className="mt-2 max-w-xl text-balance text-3xl font-bold leading-tight tracking-tight sm:text-4xl md:text-5xl">{t.heroTitle}</h1>
-        <p className="mt-3 max-w-lg text-pretty text-base text-muted-foreground sm:text-lg">
-          {t.heroSub}<br />{t.heroSub2}
-        </p>
+        <p className="mt-3 max-w-lg text-pretty text-base text-muted-foreground sm:text-lg">{t.heroSub}<br />{t.heroSub2}</p>
         <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
           <a href={ANDROID_APK_URL} className="inline-flex min-h-13 w-full max-w-xs items-center justify-center gap-2 rounded-full bg-primary px-6 py-3.5 text-base font-bold text-primary-foreground shadow-card sm:w-auto">
             <Download className="size-5 shrink-0" /><span>{t.install}</span>
@@ -180,9 +176,7 @@ function WelcomePage() {
           <Link to="/install-android" className="inline-flex min-h-12 w-full max-w-xs items-center justify-center gap-2 rounded-full border bg-card px-5 py-3 text-sm font-semibold sm:w-auto">
             <Smartphone className="size-4" />{t.androidDownload}
           </Link>
-          <button type="button" onClick={goApp} className="inline-flex min-h-12 w-full max-w-xs items-center justify-center rounded-full text-sm font-semibold text-primary underline-offset-2 hover:underline sm:w-auto">
-            {t.open}
-          </button>
+          <button type="button" onClick={goApp} className="inline-flex min-h-12 w-full max-w-xs items-center justify-center rounded-full text-sm font-semibold text-primary underline-offset-2 hover:underline sm:w-auto">{t.open}</button>
         </div>
       </section>
 
@@ -268,9 +262,7 @@ function WelcomePage() {
             <a href="tel:0796919900" className="inline-flex min-h-10 items-center gap-2 rounded-full border border-primary/25 bg-primary/5 px-4 py-2 font-semibold text-primary">
               <Smartphone className="size-4" />0796 919 900
             </a>
-            <a href="https://wa.me/250796919900" target="_blank" rel="noreferrer" className="inline-flex min-h-10 items-center gap-2 rounded-full bg-[#128C7E] px-4 py-2 font-semibold text-white">
-              WhatsApp
-            </a>
+            <a href="https://wa.me/250796919900" target="_blank" rel="noreferrer" className="inline-flex min-h-10 items-center gap-2 rounded-full bg-[#128C7E] px-4 py-2 font-semibold text-white">WhatsApp</a>
           </div>
         </div>
       </footer>
