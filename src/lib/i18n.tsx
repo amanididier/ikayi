@@ -1,37 +1,33 @@
-import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
+import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
 
-export type Lang = "en" | "rw";
+type Lang = "en" | "rw";
 
 const dict = {
-  sell: ["Sell", "Kugurisha"],
+  sell: ["Sell", "Gurisha"],
   stock: ["Stock", "Ububiko"],
   credit: ["Credit", "Amadeni"],
   history: ["History", "Amateka"],
   settings: ["Settings", "Igenamiterere"],
+  search: ["Search products…", "Shakisha ibicuruzwa…"],
   all: ["All", "Byose"],
-  search: ["Search products…", "Shakisha igicuruzwa…"],
-  left: ["left", "bisigaye"],
-  low: ["Low!", "Ibike!"],
-  out: ["Out", "Byashize"],
-  stockValue: ["Inventory value (cost)", "Agaciro k'ububiko (ikiguzi)"],
-  salesValue: ["Potential sales value", "Agaciro ko kugurisha"],
+  lowStock: ["Low stock", "Ububiko buke"],
+  outOfStock: ["Out of stock", "Nta bubiko"],
+  inStock: ["in stock", "mu bubiko"],
+  costValue: ["Stock cost value", "Agaciro k'ububiko"],
   todayCash: ["Today's cash", "Amafaranga y'uyu munsi"],
   todayCredit: ["Today's credit", "Amadeni y'uyu munsi"],
-  lowBanner: ["items are low on stock", "ibicuruzwa biri hafi gushira"],
-  quantity: ["Quantity", "Ingano"],
-  price: ["Price per unit", "Igiciro kimwe"],
+  qty: ["Quantity", "Ingano"],
+  total: ["Total", "Igiteranyo"],
   cash: ["Cash", "Amafaranga"],
   creditIdeni: ["Credit (Ideni)", "Ideni"],
-  complete: ["Complete sale", "Emeza igurisha"],
-  customer: ["Customer", "Umukiriya"],
-  newCustomer: ["New customer", "Umukiriya mushya"],
-  name: ["Name", "Izina"],
+  customerOptional: ["Customer (optional)", "Umukiriya (si ngombwa)"],
+  noteOptional: ["Note (optional)", "Ibisobanuro (si ngombwa)"],
+  confirmSale: ["Confirm sale", "Emeza igurisha"],
+  pleaseWait: ["Please wait…", "Tegereza…"],
   phone: ["Phone", "Telefone"],
-  total: ["Total", "Igiteranyo"],
-  sold: ["Sale recorded", "Igurisha ryanditswe"],
-  undo: ["Undo", "Siba"],
-  owesMe: ["People who owe me", "Abarimo amadeni"],
-  iOwe: ["People I owe", "Abo mbereyemo amadeni"],
+  customer: ["Customer", "Umukiriya"],
+  owesMe: ["Who owes you", "Abandimo amadeni"],
+  iOwe: ["Who you owe", "Abo ndimo amadeni"],
   balance: ["Balance", "Asigaye"],
   recordPayment: ["Record payment", "Andika ubwishyu"],
   amount: ["Amount", "Amafaranga"],
@@ -81,7 +77,7 @@ const dict = {
   confirmDelete: ["Delete this product type? Past sales stay in history.", "Siba iki gicuruzwa? Amakuru y'ubucuruzi asigala."],
   emptyShop: ["No products yet. Tap + to add your first real item.", "Nta bicuruzwa. Kanda + wongereho igicuruzwa cyawe."],
   reset: ["Clear app data…", "Siba amakuru y'app…"],
-  confirmReset: ["This only clears Ikayi data in the app — not your whole phone.", "Ibi bisiba gusa amakuru ya Ikayi muri app — si telefone yose."],
+  confirmReset: ["This only clears Ikayi Yange data in the app — not your whole phone.", "Ibi bisiba gusa amakuru ya Ikayi Yange muri app — si telefone yose."],
   addParty: ["Add person", "Ongeraho umuntu"],
   addDebtLbl: ["Add debt", "Ongeraho ideni"],
   description: ["Description", "Ibisobanuro"],
@@ -89,104 +85,56 @@ const dict = {
   dueIn: ["Credit period", "Igihe cy'ideni"],
   notEnough: ["Not enough stock", "Ububiko ntibuhagije"],
   profit: ["Profit", "Inyungu"],
-  welcomeTitle: ["Welcome to Ikayi", "Murakaza neza kuri Ikayi"],
-  welcomeBody: ["Sign in to back up your shop to the cloud. You can skip and work offline.", "Injira kugira ngo ubike iduka yawe kuri cloud. Urashobora gusiga ukakoresha nta murandasi."],
+  welcomeTitle: ["Welcome to Ikayi Yange", "Murakaza neza kuri Ikayi Yange"],
+  welcomeBody: ["Sign in to back up your credit book to the cloud. You can skip and work offline.", "Injira kugira ngo ubike ikayi y'amadeni kuri cloud. Urashobora gusiga ukakoresha nta murandasi."],
   continueGoogle: ["Continue with Google", "Komeza na Google"],
   email: ["Email", "Imeyili"],
   password: ["Password", "Ijambo ry'ibanga"],
   signIn: ["Sign in", "Injira"],
   signUp: ["Sign up", "Iyandikishe"],
   skipForNow: ["Skip for now — use offline", "Siga ubu — koresha nta murandasi"],
-  skipHint: ["Your sales stay on this device until you sign in and sync.", "Igurisha ryawe riba kuri aya makuru kugeza winjiye ukoherereze."],
-  signedIn: ["Signed in", "Winjiye"],
-  checkEmail: ["Check your email to confirm, then sign in", "Reba imeyili yawe, hanyuma winjire"],
-  cloudAdvice: ["Create a free account so your stock and sales sync online. If this device is lost, you can restore on another.", "Kora konti y'ubuntu kugira ngo ububiko n'igurisha bigende kuri cloud. Niba aya makuru yaraye, ushobora kugarura kuri indi."],
-  defaults: ["Defaults", "Ibisanzwe"],
-  defaultsTitle: ["Quick-add products", "Ongeramo ibicuruzwa byihuse"],
-  defaultsHint: ["Tap Add — items appear with zero stock. Open them to set cost and sell price.", "Kanda Ongeraho — bigaragara n'ububiko 0. Fungura ushyiremo ibiciro."],
-  addDefault: ["Add", "Ongeraho"],
-  addedDefault: ["Added — set prices in stock", "Byongewe — shyiramo ibiciro muri stock"],
-  alreadyHave: ["Already in stock", "Birimo"],
-  continue: ["Continue", "Komeza"],
-  reenterPassword: ["Re-enter password", "Ongera ushyire ijambo ry'ibanga"],
-  fullName: ["Your name", "Izina ryawe"],
-  businessName: ["Business name", "Izina ry'iduka"],
-  age: ["Age", "Imyaka"],
-  submit: ["Submit", "Ohereza"],
-  welcomeBtn: ["Welcome!", "Murakaza neza!"],
-  needSignUp: ["No account? Sign up", "Nta konti? Iyandikishe"],
-  needLogin: ["Have an account? Sign in", "Ufite konti? Injira"],
-  badLogin: ["Wrong phone/email or password", "Telefone/imeyili cyangwa ijambo ntabwo aribyo"],
-  passwordMismatch: ["Passwords do not match", "Amagambo y'ibanga ntabwo ahura"],
-  passwordMin: ["Password must be at least 6 characters", "Ijambo ry'ibanga rigomba kugira byibuze inyuguti 6"],
-  profileRequired: ["Enter your name and business name", "Andika izina ryawe n'izina ry'iduka"],
-  signupFailed: ["Could not create account. Try again or use Sign in.", "Konti ntiyashoboye gukorwa. Ongera ugerageze cyangwa winjire."],
-  forgotPassword: ["Forgot password?", "Wibagiwe ijambo ry'ibanga?"],
-  recoverTitle: ["Verify it's you", "Emeza ko uri wowe"],
-  recoverHint: ["Enter name, business and age you used at sign-up", "Andika izina, iduka n'imyaka wakoresheje"],
-  loginHint: ["Sign in with phone or email", "Injira ukoresheje telefone cyangwa imeyili"],
-  signupHint: ["Create your shop account", "Kora konti y'iduka yawe"],
-  verifyFail: ["Details do not match", "Amakuru ntabwo ahura"],
-  newPassword: ["New password", "Ijambo ry'ibanga rishya"],
-  selectedTotal: ["Selected sales total", "Igiteranyo cyatoranyijwe"],
-  itemsSelected: ["items selected", "byatoranyijwe"],
-  logout: ["Log out", "Sohoka"],
-  signedOut: ["Logged out — app data cleared on this device", "Wasohotse — amakuru y'app yasibwe"],
-  syncNow: ["Sync to cloud now", "Ohereza kuri cloud"],
-  synced: ["Synced to cloud", "Byoherejwe kuri cloud"],
-  contactDev: ["Need help?", "Ukeneye ubufasha?"],
-  exportPdf: ["Download report", "Kuramo raporo"],
-  confirmDeleteTitle: ["Delete product?", "Siba igicuruzwa?"],
-  confirmDeleteBody: ["This removes the product from stock. Past sales stay in history.", "Ibi bisiba igicuruzwa mu bubiko. Amateka y'igurisha asigala."],
-  accountInfo: ["Your account", "Konti yawe"],
-  notSyncedHint: ["Data syncs automatically when you are online.", "Amakuru ajya kuri cloud automatic iyo ufite murandasi."],
-  resetTitle: ["Clear Ikayi data?", "Siba amakuru ya Ikayi?"],
-  resetBody: ["This never resets your whole phone. It only clears data inside this app. App-only keeps your cloud backup. Full delete also removes your cloud backup.", "Ntabwo bisiba telefone yose — gusa amakuru muri iyi app. App gusa isiga kopi kuri cloud. Gusiba byose bisiba n'amakuru kuri cloud."],
-  resetPhoneOnly: ["Clear app data only (keep cloud)", "Siba amakuru y'app gusa (siga cloud)"],
-  resetFull: ["Clear app + cloud backup", "Siba amakuru y'app + cloud"],
-  resetPhoneDone: ["App data cleared on this device", "Amakuru y'app yasibwe"],
-  resetFullDone: ["App and cloud data cleared", "Amakuru y'app na cloud yasibwe"],
-  pleaseWait: ["Please wait…", "Tegereza…"],
+  skipHint: ["Your data stays on this device until you sign in and sync.", "Amakuru yawe abikwa kuri aya makuru kugeza winjiye ukoherereze."],
 } as const;
 
-export type Key = keyof typeof dict;
+type DictKey = keyof typeof dict;
 
-const unitLabels: Record<string, readonly [string, string]> = {
-  pcs: ["pcs", "ibice"], kg: ["kg", "kiro"], pack: ["pack", "ipaki"],
-  bottle: ["bottle", "icupa"], crate: ["crate", "ikesi"], litre: ["litre", "litiro"],
-  sack: ["sack", "umufuka"],
-};
+const I18nContext = createContext<{
+  lang: Lang;
+  setLang: (l: Lang) => void;
+  t: (key: DictKey) => string;
+} | null>(null);
 
-/** Localize labels, never the canonical unit stored in shop data. */
-export function unitLabel(unit: string, lang: Lang): string {
-  return unitLabels[unit]?.[lang === "rw" ? 1 : 0] ?? unit;
-}
-
-export function reminderText(lang: Lang, name: string, amount: string, shop: string) {
-  return lang === "rw"
-    ? `Muraho ${name}, turabibutsa ko mufite ideni rya ${amount} muri ${shop}. Murakoze cyane!`
-    : `Hello ${name}, a friendly reminder that you have a balance of ${amount} at ${shop}. Thank you!`;
-}
-
-const Ctx = createContext<{ lang: Lang; setLang: (l: Lang) => void; t: (k: Key) => string }>({
-  lang: "rw",
-  setLang: () => {},
-  t: (k) => dict[k][0],
-});
+const LANG_KEY = "iy-lang";
 
 export function I18nProvider({ children }: { children: ReactNode }) {
-  const [lang, setLangState] = useState<Lang>("rw");
+  const [lang, setLangState] = useState<Lang>(() => {
+    if (typeof window === "undefined") return "rw";
+    const saved = localStorage.getItem(LANG_KEY);
+    return saved === "en" || saved === "rw" ? saved : "rw";
+  });
+
   useEffect(() => {
-    const s = localStorage.getItem("ikayi-lang");
-    if (s === "rw" || s === "en") setLangState(s);
-  }, []);
-  const setLang = (l: Lang) => {
-    setLangState(l);
-    localStorage.setItem("ikayi-lang", l);
-    document.documentElement.lang = l;
-  };
-  const t = (k: Key) => dict[k][lang === "en" ? 0 : 1];
-  return <Ctx.Provider value={{ lang, setLang, t }}>{children}</Ctx.Provider>;
+    localStorage.setItem(LANG_KEY, lang);
+    document.documentElement.lang = lang;
+  }, [lang]);
+
+  const setLang = (l: Lang) => setLangState(l);
+
+  const t = useMemo(
+    () => (key: DictKey) => {
+      const row = dict[key];
+      return lang === "en" ? row[0] : row[1];
+    },
+    [lang],
+  );
+
+  const value = useMemo(() => ({ lang, setLang, t }), [lang, t]);
+
+  return <I18nContext.Provider value={value}>{children}</I18nContext.Provider>;
 }
 
-export const useI18n = () => useContext(Ctx);
+export function useI18n() {
+  const ctx = useContext(I18nContext);
+  if (!ctx) throw new Error("useI18n must be used within I18nProvider");
+  return ctx;
+}
