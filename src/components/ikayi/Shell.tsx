@@ -1,9 +1,10 @@
 import { type ReactNode, useCallback, useEffect, useState } from "react";
 import { Link, useRouterState } from "@tanstack/react-router";
-import { ArrowDownLeft, ArrowUpRight, Settings, Wifi, WifiOff } from "lucide-react";
+import { BookUser, HandCoins, Settings2, Wifi, WifiOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useI18n } from "@/lib/i18n";
 import { isLoggedIn } from "@/lib/auth";
+import { enterAppMode, isAppMode } from "@/lib/app-mode";
 import { AuthCard } from "./AuthCard";
 import logo from "@/assets/ikayi-logo.png";
 
@@ -18,6 +19,10 @@ export function Shell({ children }: { children: ReactNode }) {
     path.startsWith("/welcome/") ||
     path === "/install-android" ||
     path.startsWith("/install-android/");
+
+  useEffect(() => {
+    if (isAppMode()) enterAppMode();
+  }, []);
 
   useEffect(() => {
     setOnline(navigator.onLine);
@@ -50,9 +55,9 @@ export function Shell({ children }: { children: ReactNode }) {
   }, []);
 
   const tabs = [
-    { to: "/" as const, label: t("owesMe"), icon: ArrowDownLeft },
-    { to: "/i-owe" as const, label: t("iOwe"), icon: ArrowUpRight },
-    { to: "/settings" as const, label: t("settings"), icon: Settings },
+    { to: "/" as const, label: t("owesMe"), icon: BookUser },
+    { to: "/i-owe" as const, label: t("iOwe"), icon: HandCoins },
+    { to: "/settings" as const, label: t("settings"), icon: Settings2 },
   ];
 
   if (isLanding) {
@@ -110,7 +115,7 @@ export function Shell({ children }: { children: ReactNode }) {
               }`}
             >
               <Link to={to} aria-label={label} aria-current={active ? "page" : undefined}>
-                <Icon className="size-5 shrink-0" />
+                <Icon className="size-5 shrink-0" strokeWidth={1.75} />
                 {active && <span className="truncate text-sm font-semibold">{label}</span>}
               </Link>
             </Button>
