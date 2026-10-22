@@ -108,6 +108,25 @@ export function CreditBook({ kind }: { kind: PartyKind }) {
         <ul className="space-y-2">
           {filtered.map((r) => {
             const open = openId === r.p.id;
+            const txs = [
+              ...r.debts.map((d) => ({
+                key: `d-${d.id}`,
+                kind: "debt" as const,
+                label: d.description || t("addDebtLbl"),
+                amount: d.amount,
+                at: d.createdAt,
+                extra: d.dueDays ? ` · ${d.dueDays} ${t("days")}` : "",
+              })),
+              ...r.payments.map((p) => ({
+                key: `p-${p.id}`,
+                kind: "payment" as const,
+                label: rw ? "Ubwishyu" : "Payment",
+                amount: p.amount,
+                at: p.createdAt,
+                extra: "",
+              })),
+            ].sort((a, b) => a.at - b.at);
+            const shown = history && openId === r.p.id ? txs : txs.slice(-4);
             return (
               <li key={r.p.id} className="rounded-2xl bg-card p-3 shadow-card">
                 <div className="flex items-center gap-3">
@@ -129,20 +148,26 @@ export function CreditBook({ kind }: { kind: PartyKind }) {
                 {open && (
                   <div className="mt-3 space-y-3 border-t pt-3">
                     <ul className="space-y-2">
-                      {(history ? r.debts : r.debts.slice(-3)).map((d) => (
-                        <li key={d.id} className="flex justify-between gap-3 text-sm">
+                      {shown.map((tx) => (
+                        <li key={tx.key} className="flex justify-between gap-3 text-sm">
                           <span className="min-w-0">
-                            <span className="block truncate font-medium">{d.description || t("addDebtLbl")}</span>
+                            <span className="block truncate font-medium">{tx.label}</span>
                             <span className="text-[11px] text-muted-foreground">
-                              {new Date(d.createdAt).toLocaleDateString("en-GB")}
-                              {d.dueDays ? ` · ${d.dueDays} ${t("days")}` : ""}
+                              {new Date(tx.at).toLocaleDateString("en-GB")}
+                              {tx.extra}
                             </span>
                           </span>
-                          <span className="shrink-0 font-semibold tabular-nums">{fmt(d.amount)}</span>
+                          <span className={`shrink-0 font-semibold tabular-nums ${tx.kind === "payment" ? "text-emerald-600" : "text-primary"}`}>
+                            {tx.kind === "payment" ? "−" : "+"}
+                            {fmt(tx.amount)}
+                          </span>
                         </li>
                       ))}
+                      {shown.length === 0 && (
+                        <li className="text-center text-xs text-muted-foreground">{rw ? "Nta mateka" : "No transactions yet"}</li>
+                      )}
                     </ul>
-                    {r.debts.length > 3 && (
+                    {txs.length > 4 && (
                       <Button variant="ghost" className="h-9 w-full rounded-full text-xs" onClick={() => setHistory((h) => !h)}>
                         {history ? (rw ? "Hisha amateka" : "Hide history") : (rw ? "Reba amateka yose" : "Show full history")}
                       </Button>
