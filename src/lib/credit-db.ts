@@ -4,11 +4,11 @@ export type Party = { id: number; name: string; phone: string; kind: PartyKind; 
 export type Entry = { id: number; partyId: number; amount: number; createdAt: number; description?: string; dueDays?: number };
 export type UsageRow = { date: string; path: string; views: number; reported: number };
 class CreditDB extends Dexie {
-  parties!: Table<Party, number>;
-  debts!: Table<Entry, number>;
-  payments!: Table<Entry, number>;
-  settings!: Table<{key:string;value:string}, string>;
-  usage!: Table<UsageRow, [string, string]>;
+  parties: Table<Party, number>;
+  debts: Table<Entry, number>;
+  payments: Table<Entry, number>;
+  settings: Table<{key:string;value:string}, string>;
+  usage: Table<UsageRow, [string, string]>;
   constructor() {
     super('ikayi-credit');
     this.version(1).stores({parties:'id,kind,name',debts:'id,partyId,createdAt',payments:'id,partyId,createdAt',settings:'key'});

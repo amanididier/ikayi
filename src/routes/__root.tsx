@@ -49,7 +49,9 @@ function ErrorComponent({ error, reset }: ErrorComponentProps) {
   return (
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
       <div className="max-w-md text-center">
-        <h1 className="text-xl font-semibold tracking-tight text-foreground">This page didn't load</h1>
+        <h1 className="text-xl font-semibold tracking-tight text-foreground">
+          This page didn't load
+        </h1>
         <p className="mt-2 text-sm text-muted-foreground">
           Something went wrong on our end. You can try refreshing or head back home.
         </p>
@@ -80,21 +82,21 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Ikayi Yange — Ikayi y'amadeni" },
-      { name: "description", content: "Ikayi Yange: amadeni n'ubwishyu bwawe." },
-      { name: "author", content: "Ikayi Yange" },
-      { property: "og:title", content: "Ikayi Yange — Ikayi y'amadeni" },
-      { property: "og:description", content: "Ikayi Yange: amadeni n'ubwishyu bwawe." },
+      { title: "Ikayi — Ikayi y’amadeni" },
+      { name: "description", content: "Ikayi y’amadeni n’ubwishyu bwawe." },
+      { name: "author", content: "Ikayi" },
+      { property: "og:title", content: "Ikayi — Ikayi y’amadeni" },
+      { property: "og:description", content: "Ikayi y’amadeni n’ubwishyu bwawe." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
     ],
     links: [
-      { rel: "stylesheet", href: appCss },
-      { rel: "icon", href: "/favicon.png", type: "image/png" },
       {
         rel: "stylesheet",
-        href: "https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&display=swap",
+        href: appCss,
       },
+      { rel: "icon", href: "/favicon.png", type: "image/png" },
+      { rel: "stylesheet", href: "https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&display=swap" },
     ],
   }),
   shellComponent: RootShell,
@@ -121,6 +123,7 @@ function RootComponent() {
   const { queryClient } = Route.useRouteContext();
   const path = useRouterState({ select: (s) => s.location.pathname });
 
+  // Usage analytics: record page views locally, upload at most once per day when online.
   useEffect(() => {
     void trackPageView(path);
   }, [path]);
@@ -134,10 +137,8 @@ function RootComponent() {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <I18nProvider>
-        <Outlet />
-        <Toaster />
-      </I18nProvider>
+      {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
+      <I18nProvider><Outlet /><Toaster /></I18nProvider>
     </QueryClientProvider>
   );
 }

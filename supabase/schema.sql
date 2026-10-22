@@ -86,9 +86,11 @@ grant all on public.usage_daily to service_role;
 alter table public.app_admins enable row level security;
 alter table public.usage_daily enable row level security;
 
+-- A user can only check their own admin membership
 drop policy if exists "admins_self_read" on public.app_admins;
 create policy "admins_self_read" on public.app_admins for select using (auth.uid() = user_id);
 
+-- Users upload and read only their own usage; admins can read everyone's
 drop policy if exists "usage_own_insert" on public.usage_daily;
 create policy "usage_own_insert" on public.usage_daily for insert with check (auth.uid() = user_id);
 

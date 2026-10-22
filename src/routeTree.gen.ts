@@ -75,12 +75,7 @@ export interface FileRoutesById {
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
-    | '/'
-    | '/admin'
-    | '/i-owe'
-    | '/install-android'
-    | '/settings'
-    | '/welcome'
+    '/' | '/admin' | '/i-owe' | '/install-android' | '/settings' | '/welcome'
   fileRoutesByTo: FileRoutesByTo
   to: '/' | '/admin' | '/i-owe' | '/install-android' | '/settings' | '/welcome'
   id:

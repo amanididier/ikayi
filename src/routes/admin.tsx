@@ -20,8 +20,8 @@ type State =
 export const Route = createFileRoute("/admin")({
   head: () => ({
     meta: [
-      { title: "Ikayi Yange — Admin" },
-      { name: "description", content: "Ikayi Yange usage analytics for the app owner." },
+      { title: "Ikayi — Admin" },
+      { name: "description", content: "Ikayi usage analytics for the app owner." },
       { name: "robots", content: "noindex" },
     ],
   }),
@@ -112,23 +112,14 @@ function AdminPage() {
           </div>
         </div>
         <Button asChild variant="outline" className="h-9 rounded-full">
-          <Link to="/">
-            <ArrowLeft className="size-4" />
-            {rw ? "Subira" : "Back"}
-          </Link>
+          <Link to="/"><ArrowLeft className="size-4" />{rw ? "Subira" : "Back"}</Link>
         </Button>
       </header>
 
       <main className="space-y-5 px-4 pb-12 pt-3">
-        {state.status === "loading" && (
-          <p className="pt-10 text-center text-sm text-muted-foreground">{rw ? "Tegereza…" : "Loading…"}</p>
-        )}
-        {state.status === "no_cloud" && (
-          <Notice>{rw ? "Cloud ntabwo ihujwe." : "Cloud is not configured for this build."}</Notice>
-        )}
-        {state.status === "signed_out" && (
-          <Notice>{rw ? "Injira mbere, hanyuma ufungure /admin." : "Sign in on the app first, then open /admin again."}</Notice>
-        )}
+        {state.status === "loading" && <p className="pt-10 text-center text-sm text-muted-foreground">{rw ? "Tegereza…" : "Loading…"}</p>}
+        {state.status === "no_cloud" && <Notice>{rw ? "Cloud ntabwo ihujwe." : "Cloud is not configured for this build."}</Notice>}
+        {state.status === "signed_out" && <Notice>{rw ? "Injira mbere, hanyuma ufungure /admin." : "Sign in on the app first, then open /admin again."}</Notice>}
         {state.status === "not_admin" && (
           <Notice>
             {rw
@@ -149,9 +140,7 @@ function AdminPage() {
             <section className="rounded-2xl border bg-card p-4 shadow-card">
               <h2 className="mb-3 text-base font-bold">{rw ? "Paji zikunzwe" : "Most used pages"}</h2>
               <ul className="space-y-2">
-                {stats.pages.length === 0 && (
-                  <li className="text-sm text-muted-foreground">{rw ? "Nta makuru aracyariho." : "No data yet."}</li>
-                )}
+                {stats.pages.length === 0 && <li className="text-sm text-muted-foreground">{rw ? "Nta makuru aracyariho." : "No data yet."}</li>}
                 {stats.pages.map(([path, views]) => (
                   <li key={path} className="flex items-center justify-between gap-3 text-sm">
                     <span>{PATH_LABELS[path] ?? path}</span>
@@ -164,9 +153,7 @@ function AdminPage() {
             <section className="rounded-2xl border bg-card p-4 shadow-card">
               <h2 className="mb-3 text-base font-bold">{rw ? "Abakoresha" : "Users"}</h2>
               <ul className="space-y-3">
-                {stats.users.size === 0 && (
-                  <li className="text-sm text-muted-foreground">{rw ? "Nta makuru aracyariho." : "No data yet."}</li>
-                )}
+                {stats.users.size === 0 && <li className="text-sm text-muted-foreground">{rw ? "Nta makuru aracyariho." : "No data yet."}</li>}
                 {[...stats.users.entries()]
                   .sort((a, b) => b[1].lastDay.localeCompare(a[1].lastDay))
                   .map(([uid, u]) => {
@@ -176,13 +163,10 @@ function AdminPage() {
                       <li key={uid} className="border-b pb-3 text-sm last:border-0 last:pb-0">
                         <div className="flex items-center justify-between gap-3">
                           <span className="font-semibold">{name}</span>
-                          <span className="text-xs text-muted-foreground">
-                            {rw ? "yaherukaga" : "last active"} {u.lastDay || "—"}
-                          </span>
+                          <span className="text-xs text-muted-foreground">{rw ? "yaherukaga" : "last active"} {u.lastDay || "—"}</span>
                         </div>
                         <p className="mt-0.5 text-xs text-muted-foreground">
-                          {u.opens} {rw ? "ufungure" : "opens"} · {u.views} {rw ? "paji" : "views"} ·{" "}
-                          {u.devices.size} {rw ? "telefone" : "device(s)"}
+                          {u.opens} {rw ? "ufungure" : "opens"} · {u.views} {rw ? "paji" : "views"} · {u.devices.size} {rw ? "telefone" : "device(s)"}
                         </p>
                       </li>
                     );
@@ -193,9 +177,7 @@ function AdminPage() {
             <section className="rounded-2xl border bg-card p-4 shadow-card">
               <h2 className="mb-3 text-base font-bold">{rw ? "Ufungurwa buri munsi" : "Opens per day"}</h2>
               <ul className="space-y-2">
-                {stats.days.length === 0 && (
-                  <li className="text-sm text-muted-foreground">{rw ? "Nta makuru aracyariho." : "No data yet."}</li>
-                )}
+                {stats.days.length === 0 && <li className="text-sm text-muted-foreground">{rw ? "Nta makuru aracyariho." : "No data yet."}</li>}
                 {stats.days.map(([day, opens]) => (
                   <li key={day} className="flex items-center justify-between gap-3 text-sm">
                     <span className="tabular-nums">{day}</span>
@@ -214,10 +196,7 @@ function AdminPage() {
 function Stat({ icon, label, value }: { icon: React.ReactNode; label: string; value: number }) {
   return (
     <div className="rounded-2xl border bg-card p-3 text-center shadow-card">
-      <p className="mx-auto mb-1 flex items-center justify-center gap-1 text-[11px] text-muted-foreground">
-        {icon}
-        {label}
-      </p>
+      <p className="mx-auto mb-1 flex items-center justify-center gap-1 text-[11px] text-muted-foreground">{icon}{label}</p>
       <p className="text-2xl font-bold tabular-nums">{value}</p>
     </div>
   );

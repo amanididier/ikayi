@@ -124,33 +124,33 @@ export async function pullCredit(
       if (remoteParties.length) {
         await db.parties.bulkPut(
           remoteParties.map((p: Record<string, unknown>) => ({
-            id: Number(p.local_id),
-            name: String(p.name ?? ""),
-            phone: String(p.phone ?? ""),
-            kind: (p.kind === "supplier" ? "supplier" : "customer") as "customer" | "supplier",
-            createdAt: p.created_at ? new Date(String(p.created_at)).getTime() : Date.now(),
+            id: Number(p["local_id"]),
+            name: String(p["name"] ?? ""),
+            phone: String(p["phone"] ?? ""),
+            kind: (p["kind"] === "supplier" ? "supplier" : "customer") as "customer" | "supplier",
+            createdAt: p["created_at"] ? new Date(String(p["created_at"])).getTime() : Date.now(),
           })),
         );
       }
       if (remoteDebts.length) {
         await db.debts.bulkPut(
           remoteDebts.map((d: Record<string, unknown>) => ({
-            id: Number(d.local_id),
-            partyId: Number(d.party_local_id),
-            amount: Number(d.amount),
-            description: String(d.description ?? ""),
-            createdAt: d.created_at ? new Date(String(d.created_at)).getTime() : Date.now(),
-            ...(d.due_days != null ? { dueDays: Number(d.due_days) } : {}),
+            id: Number(d["local_id"]),
+            partyId: Number(d["party_local_id"]),
+            amount: Number(d["amount"]),
+            description: String(d["description"] ?? ""),
+            createdAt: d["created_at"] ? new Date(String(d["created_at"])).getTime() : Date.now(),
+            ...(d["due_days"] != null ? { dueDays: Number(d["due_days"]) } : {}),
           })),
         );
       }
       if (remotePays.length) {
         await db.payments.bulkPut(
           remotePays.map((p: Record<string, unknown>) => ({
-            id: Number(p.local_id),
-            partyId: Number(p.party_local_id),
-            amount: Number(p.amount),
-            createdAt: p.created_at ? new Date(String(p.created_at)).getTime() : Date.now(),
+            id: Number(p["local_id"]),
+            partyId: Number(p["party_local_id"]),
+            amount: Number(p["amount"]),
+            createdAt: p["created_at"] ? new Date(String(p["created_at"])).getTime() : Date.now(),
           })),
         );
       }
@@ -227,6 +227,6 @@ export async function checkRemoteAhead(): Promise<{ ahead: boolean }> {
     .limit(1);
 
   if (!data?.length) return { ahead: false };
-  const remoteTs = new Date(data[0].created_at).getTime();
+  const remoteTs = new Date(data[0]?.created_at ?? 0).getTime();
   return { ahead: remoteTs > localMax + 2000 };
 }
