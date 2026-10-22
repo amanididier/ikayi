@@ -7,7 +7,7 @@ import { enterAppMode, isAppMode, isNativePlatform } from "@/lib/app-mode";
 
 export const Route = createFileRoute("/i-owe")({
   head: () => ({
-    meta: [{ title: "Ikayi Yange — Abo ndimo amadeni" }],
+    meta: [{ title: "Ikayi Yange — Abo ndimo amadeni" }, { name: "robots", content: "noindex, nofollow" }],
   }),
   component: IOweEntry,
 });
