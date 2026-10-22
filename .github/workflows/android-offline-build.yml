@@ -137,42 +137,45 @@ jobs:
 
           anydpi = res / "mipmap-anydpi-v26"
           anydpi.mkdir(parents=True, exist_ok=True)
-          adaptive = """<?xml version=\"1.0\" encoding=\"utf-8\"?>
-<adaptive-icon xmlns:android=\"http://schemas.android.com/apk/res/android\">
-    <background android:drawable=\"@mipmap/ic_launcher_background\"/>
-    <foreground android:drawable=\"@mipmap/ic_launcher_foreground\"/>
-</adaptive-icon>
-"""
+          adaptive = (
+              '<?xml version="1.0" encoding="utf-8"?>\n'
+              '<adaptive-icon xmlns:android="http://schemas.android.com/apk/res/android">\n'
+              '    <background android:drawable="@mipmap/ic_launcher_background"/>\n'
+              '    <foreground android:drawable="@mipmap/ic_launcher_foreground"/>\n'
+              '</adaptive-icon>\n'
+          )
           for name in ("ic_launcher", "ic_launcher_round"):
-              (anydpi / f"{name}.xml").write_text(adaptive)
+              (anydpi / (name + ".xml")).write_text(adaptive)
 
           values = res / "values"
           values.mkdir(parents=True, exist_ok=True)
-          (values / "styles.xml").write_text("""<?xml version=\"1.0\" encoding=\"utf-8\"?>
-<resources>
-    <style name=\"AppTheme\" parent=\"Theme.AppCompat.Light.DarkActionBar\">
-        <item name=\"colorPrimary\">#E87828</item>
-        <item name=\"colorPrimaryDark\">#D45A12</item>
-        <item name=\"colorAccent\">#E87828</item>
-        <item name=\"android:statusBarColor\">#FAF8F5</item>
-        <item name=\"android:navigationBarColor\">#FAF8F5</item>
-        <item name=\"android:windowBackground\">@drawable/splash</item>
-    </style>
-    <style name=\"AppTheme.NoActionBar\" parent=\"Theme.AppCompat.DayNight.NoActionBar\">
-        <item name=\"windowActionBar\">false</item>
-        <item name=\"windowNoTitle\">true</item>
-        <item name=\"android:windowBackground\">@drawable/splash</item>
-        <item name=\"android:statusBarColor\">#FAF8F5</item>
-        <item name=\"android:navigationBarColor\">#FAF8F5</item>
-    </style>
-    <style name=\"AppTheme.NoActionBarLaunch\" parent=\"Theme.SplashScreen\">
-        <item name=\"android:windowBackground\">@drawable/splash</item>
-        <item name=\"windowSplashScreenBackground\">#FAF8F5</item>
-        <item name=\"windowSplashScreenAnimatedIcon\">@mipmap/ic_launcher_foreground</item>
-        <item name=\"postSplashScreenTheme\">@style/AppTheme.NoActionBar</item>
-    </style>
-</resources>
-""")
+          styles = (
+              '<?xml version="1.0" encoding="utf-8"?>\n'
+              '<resources>\n'
+              '    <style name="AppTheme" parent="Theme.AppCompat.Light.DarkActionBar">\n'
+              '        <item name="colorPrimary">#E87828</item>\n'
+              '        <item name="colorPrimaryDark">#D45A12</item>\n'
+              '        <item name="colorAccent">#E87828</item>\n'
+              '        <item name="android:statusBarColor">#FAF8F5</item>\n'
+              '        <item name="android:navigationBarColor">#FAF8F5</item>\n'
+              '        <item name="android:windowBackground">@drawable/splash</item>\n'
+              '    </style>\n'
+              '    <style name="AppTheme.NoActionBar" parent="Theme.AppCompat.DayNight.NoActionBar">\n'
+              '        <item name="windowActionBar">false</item>\n'
+              '        <item name="windowNoTitle">true</item>\n'
+              '        <item name="android:windowBackground">@drawable/splash</item>\n'
+              '        <item name="android:statusBarColor">#FAF8F5</item>\n'
+              '        <item name="android:navigationBarColor">#FAF8F5</item>\n'
+              '    </style>\n'
+              '    <style name="AppTheme.NoActionBarLaunch" parent="Theme.SplashScreen">\n'
+              '        <item name="android:windowBackground">@drawable/splash</item>\n'
+              '        <item name="windowSplashScreenBackground">#FAF8F5</item>\n'
+              '        <item name="windowSplashScreenAnimatedIcon">@mipmap/ic_launcher_foreground</item>\n'
+              '        <item name="postSplashScreenTheme">@style/AppTheme.NoActionBar</item>\n'
+              '    </style>\n'
+              '</resources>\n'
+          )
+          (values / "styles.xml").write_text(styles)
           PY
 
       - name: Verify Ikayi native branding assets
