@@ -1,4 +1,5 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { Capacitor } from "@capacitor/core";
 import { useEffect, useState } from "react";
 import {
   BookUser,
@@ -11,7 +12,7 @@ import {
 } from "lucide-react";
 import logo from "@/assets/ikayi-logo.png";
 import { cn } from "@/lib/utils";
-import { enterAppMode } from "@/lib/app-mode";
+import { enterAppMode, isNativePlatform } from "@/lib/app-mode";
 
 export const Route = createFileRoute("/welcome")({
   head: () => ({
@@ -118,6 +119,14 @@ function WelcomePage() {
   const navigate = useNavigate();
   const [lang, setLang] = useState<Lang>("rw");
   const t = copy[lang];
+
+  // APK must never show marketing — bounce to credit book
+  useEffect(() => {
+    if (Capacitor.isNativePlatform() || isNativePlatform()) {
+      enterAppMode();
+      navigate({ to: "/", replace: true });
+    }
+  }, [navigate]);
 
   useEffect(() => {
     const saved = localStorage.getItem("iy-lang");
