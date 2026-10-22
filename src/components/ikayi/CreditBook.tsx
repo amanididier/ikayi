@@ -34,6 +34,7 @@ import {
 import { useI18n, reminderText } from "@/lib/i18n";
 import { DeadlinePicker, isoToDueDays } from "@/components/ikayi/DeadlinePicker";
 import { pushCredit } from "@/lib/sync";
+import { maybeSendUsage, trackAction } from "@/lib/usage";
 
 type FormKind = "person" | "debt" | "payment" | "edit";
 
@@ -209,7 +210,11 @@ export function CreditBook({ kind }: { kind: PartyKind }) {
             <Button variant="destructive" className="h-12 flex-1 rounded-full" disabled={busy} onClick={async () => {
               if (!removing) return;
               setBusy(true);
-              try { await deletePerson(removing.id); toast.success(rw ? "Byasibwe" : "Deleted"); setRemoving(null); }
+              try {
+                await deletePerson(removing.id);
+                try { await trackAction("person_deleted"); await maybeSendUsage(); } catch { /* Analytics must never block a local save. */ }
+                toast.success(rw ? "Byasibwe" : "Deleted"); setRemoving(null);
+              }
               finally { setBusy(false); }
             }}>{rw ? "Siba" : "Delete"}</Button>
           </div>
@@ -245,6 +250,13 @@ function CreditForm({ type, party, balance, kind, onDone }: { type: FormKind; pa
           await db.parties.update(party.id, { name: name.trim(), phone: phone.trim() });
         } else if (type === "debt") await addDebt(party.id, n, desc, days);
         else await pay(party.id, n, date);
+      }
+      // Log only the action category, never the party name, phone, amount, or description.
+      const analyticsAction = type === "person"
+        ? (kind === "customer" ? "customer_added" : "supplier_added")
+        : type === "debt" ? "debt_added" : type === "payment" ? "payment_recorded" : null;
+      if (analyticsAction) {
+        try { await trackAction(analyticsAction); await maybeSendUsage(); } catch { /* Analytics must never block a local save. */ }
       }
       if (localStorage.getItem("ikayi-sync-mode") === "auto" && navigator.onLine) {
         const syncResult = await pushCredit();
