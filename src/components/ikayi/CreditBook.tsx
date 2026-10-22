@@ -33,6 +33,7 @@ import {
 } from "@/lib/credit-db";
 import { useI18n, reminderText } from "@/lib/i18n";
 import { DeadlinePicker, isoToDueDays } from "@/components/ikayi/DeadlinePicker";
+import { pushCredit } from "@/lib/sync";
 
 type FormKind = "person" | "debt" | "payment" | "edit";
 
@@ -244,6 +245,10 @@ function CreditForm({ type, party, balance, kind, onDone }: { type: FormKind; pa
           await db.parties.update(party.id, { name: name.trim(), phone: phone.trim() });
         } else if (type === "debt") await addDebt(party.id, n, desc, days);
         else await pay(party.id, n, date);
+      }
+      if (localStorage.getItem("ikayi-sync-mode") === "auto" && navigator.onLine) {
+        const syncResult = await pushCredit();
+        if (!syncResult.ok) toast.message(`Saved locally; cloud sync pending: ${syncResult.reason}`);
       }
       toast.success(t("save"));
       onDone();
