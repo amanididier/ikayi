@@ -43,6 +43,7 @@ function AdminPage() {
   const { lang } = useI18n();
   const rw = lang === "rw";
   const [state, setState] = useState<State>({ status: "loading" });
+  const [period, setPeriod] = useState<"7" | "30" | "90" | "365">("30");
 
   useEffect(() => {
     let cancelled = false;
@@ -75,10 +76,12 @@ function AdminPage() {
 
   const stats = useMemo(() => {
     if (state.status !== "ready") return null;
+    const cutoff = new Date(Date.now() - Number(period) * 86400000).toISOString().slice(0, 10);
+    const periodRows = state.rows.filter((r) => r.day >= cutoff);
     const users = new Map<string, { opens: number; views: number; lastDay: string; devices: Set<string> }>();
     const pages = new Map<string, number>();
     const days = new Map<string, number>();
-    for (const r of state.rows) {
+    for (const r of periodRows) {
       const u = users.get(r.user_id) ?? { opens: 0, views: 0, lastDay: "", devices: new Set<string>() };
       u.views += r.views;
       if (r.path === OPEN_PATH) u.opens += r.views;
@@ -88,16 +91,15 @@ function AdminPage() {
       if (r.path !== OPEN_PATH) pages.set(r.path, (pages.get(r.path) ?? 0) + r.views);
       else days.set(r.day, (days.get(r.day) ?? 0) + r.views);
     }
-    const weekAgo = new Date(Date.now() - 7 * 86400000).toISOString().slice(0, 10);
     return {
-      totalUsers: users.size,
-      activeWeek: [...users.values()].filter((u) => u.lastDay >= weekAgo).length,
+      totalUsers: state.profiles.size,
+      activeUsers: users.size,
       totalViews: [...users.values()].reduce((s, u) => s + u.views, 0),
       users,
       pages: [...pages.entries()].sort((a, b) => b[1] - a[1]),
       days: [...days.entries()].sort((a, b) => b[0].localeCompare(a[0])).slice(0, 14),
     };
-  }, [state]);
+  }, [state, period]);
 
   return (
     <div className="app-shell">
@@ -131,9 +133,20 @@ function AdminPage() {
 
         {state.status === "ready" && stats && (
           <>
+            <section className="rounded-2xl border bg-card p-4 shadow-card">
+              <label className="flex items-center justify-between gap-3 text-sm font-medium">
+                <span>{rw ? "Igihe cyo kureba amakuru" : "Analytics period"}</span>
+                <select aria-label={rw ? "Igihe cyo kureba amakuru" : "Analytics period"} className="rounded-xl border bg-background px-3 py-2" value={period} onChange={(e) => setPeriod(e.target.value as "7" | "30" | "90" | "365")}>
+                  <option value="7">{rw ? "Iminsi 7" : "7 days"}</option>
+                  <option value="30">{rw ? "Ukwezi" : "30 days"}</option>
+                  <option value="90">{rw ? "Iminsi 90" : "90 days"}</option>
+                  <option value="365">{rw ? "Umwaka" : "1 year"}</option>
+                </select>
+              </label>
+            </section>
             <section className="grid grid-cols-3 gap-2">
-              <Stat icon={<Users className="size-4" />} label={rw ? "Abakoresha" : "Users"} value={stats.totalUsers} />
-              <Stat icon={<Eye className="size-4" />} label={rw ? "Bakoresheje icyumweru" : "Active this week"} value={stats.activeWeek} />
+              <Stat icon={<Users className="size-4" />} label={rw ? "Konti zose" : "Signed-up users"} value={stats.totalUsers} />
+              <Stat icon={<Eye className="size-4" />} label={rw ? "Bakoresheje muri iki gihe" : "Active in period"} value={stats.activeUsers} />
               <Stat icon={<BarChart3 className="size-4" />} label={rw ? "Paji zafunguwe" : "Page views"} value={stats.totalViews} />
             </section>
 
