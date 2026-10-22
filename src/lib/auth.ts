@@ -87,7 +87,7 @@ export async function signUp(opts: {
     password: opts.password,
     options: {
       data: { login_type: opts.loginType, identifier: id, app: "ikayi" },
-      emailRedirectTo: typeof window !== "undefined" ? window.location.origin : undefined,
+      ...(typeof window !== "undefined" ? { emailRedirectTo: window.location.origin } : {}),
     },
   });
 
@@ -102,7 +102,7 @@ export async function signUp(opts: {
   saveAccount({
     loginType: opts.loginType,
     identifier: id,
-    supabaseUserId: uid,
+    ...(uid ? { supabaseUserId: uid } : {}),
     createdAt: Date.now(),
   });
 
@@ -171,7 +171,7 @@ export async function requestPasswordReset(emailOrPhone: string, loginType: Logi
   if (!client || !supabaseConfigured) return { ok: false as const, error: "no_cloud" };
   const email = loginType === "email" ? emailOrPhone.trim().toLowerCase() : syntheticEmail(emailOrPhone);
   const { error } = await client.auth.resetPasswordForEmail(email, {
-    redirectTo: typeof window !== "undefined" ? `${window.location.origin}/` : undefined,
+    ...(typeof window !== "undefined" ? { redirectTo: `${window.location.origin}/` } : {}),
   });
   if (error) return { ok: false as const, error: error.message };
   return { ok: true as const };
