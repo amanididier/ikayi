@@ -7,7 +7,7 @@ import { enterAppMode, isAppMode, isNativePlatform } from "@/lib/app-mode";
 
 export const Route = createFileRoute("/settings")({
   head: () => ({
-    meta: [{ title: "Igenamiterere — Ikayi Yange" }],
+    meta: [{ title: "Igenamiterere — Ikayi Yange" }, { name: "robots", content: "noindex, nofollow" }],
   }),
   component: SettingsEntry,
 });
