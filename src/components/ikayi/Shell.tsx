@@ -14,6 +14,7 @@ export function Shell({ children }: { children: ReactNode }) {
   const [online, setOnline] = useState(true);
   const [authed, setAuthed] = useState(false);
   const [checking, setChecking] = useState(true);
+  const [startupStage, setStartupStage] = useState<"opening" | "checking" | "ready">("opening");
   const isLanding =
     path === "/welcome" ||
     path.startsWith("/welcome/") ||
@@ -37,9 +38,18 @@ export function Shell({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     let cancelled = false;
+    setStartupStage("checking");
     void isLoggedIn().then((ok) => {
       if (!cancelled) {
         setAuthed(ok);
+        setStartupStage("ready");
+        setChecking(false);
+      }
+    }).catch(() => {
+      // A local auth lookup failure must never trap the user on the loading screen.
+      if (!cancelled) {
+        setAuthed(false);
+        setStartupStage("ready");
         setChecking(false);
       }
     });
@@ -65,12 +75,31 @@ export function Shell({ children }: { children: ReactNode }) {
   }
 
   if (checking) {
+    const status = startupStage === "opening"
+      ? (lang === "rw" ? "Turafungura Ikayi Yange…" : "Opening Ikayi Yange…")
+      : (lang === "rw" ? "Turategura amakuru yawe…" : "Getting your account ready…");
+
     return (
-      <div className="app-shell flex min-h-dvh flex-col items-center justify-center">
-        <img src={logo} alt="" className="mb-4 size-16 rounded-2xl" />
-        <p className="text-sm font-semibold">Ikayi Yange</p>
-        <p className="mt-2 text-xs text-muted-foreground">{lang === "rw" ? "Tegereza…" : "Loading…"}</p>
-      </div>
+      <main
+        className="ikayi-startup"
+        role="status"
+        aria-live="polite"
+        aria-label={lang === "rw" ? "Gufungura Ikayi Yange" : "Opening Ikayi Yange"}
+      >
+        <div className="ikayi-startup-content">
+          <img src={logo} alt="Ikayi Yange" className="ikayi-startup-logo" />
+          <h1 className="ikayi-startup-title">Ikayi Yange</h1>
+          <p className="ikayi-startup-description">
+            {lang === "rw"
+              ? "Ikayi y’amadeni n’ubwishyu bwawe."
+              : "Your simple book for debts and payments."}
+          </p>
+          <div className="ikayi-startup-track" aria-hidden="true">
+            <span className={startupStage === "ready" ? "is-ready" : "is-loading"} />
+          </div>
+          <p className="ikayi-startup-status">{status}</p>
+        </div>
+      </main>
     );
   }
 
