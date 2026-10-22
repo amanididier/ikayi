@@ -66,7 +66,7 @@ export async function trackAppOpen(now = Date.now()): Promise<void> {
 
 /** Minimal upsert client so tests can inject a fake. */
 export type UsageUploader = {
-  from(table: string): { upsert(rows: unknown[], opts: { onConflict: string }): Promise<{ error: { message: string } | null }> };
+  from(table: string): { upsert(rows: unknown[], opts: { onConflict: string }): PromiseLike<{ error: { message: string } | null }> };
 };
 
 /**
