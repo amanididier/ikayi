@@ -114,7 +114,6 @@ export type SendResult =
  * counted, so the next online moment that day tries again.
  */
 export async function maybeSendUsage(now = Date.now()): Promise<SendResult> {
-  if (!shouldSendToday(localStorage.getItem(SENT_KEY), now)) return { ok: true, sent: false };
   if (!supabaseConfigured) return { ok: false, reason: "no_cloud" };
   if (typeof navigator !== "undefined" && !navigator.onLine) return { ok: false, reason: "offline" };
   const client = await ensureSupabase();
