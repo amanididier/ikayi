@@ -77,20 +77,32 @@ export async function signUp(opts: {
     return { ok: true };
   }
 
-  const { data, error } = await client.auth.signUp({ email, password: opts.password });
+  const { data, error } = await client.auth.signUp({
+    email,
+    password: opts.password,
+    options: {
+      data: { login_type: opts.loginType, identifier: id, app: "ikayi" },
+      ...(typeof window !== "undefined" ? { emailRedirectTo: window.location.origin } : {}),
+    },
+  });
+
   if (error) {
     if (/already registered|already been registered|user already/i.test(error.message)) {
       return { ok: false, error: "exists", detail: error.message };
     }
     return { ok: false, error: "signup_failed", detail: error.message };
   }
-  if (data.user) {
-    saveAccount({
-      loginType: opts.loginType,
-      identifier: id,
-      supabaseUserId: data.user.id,
-      createdAt: Date.now(),
-    });
+
+  const uid = data.user?.id ?? data.session?.user?.id;
+  saveAccount({
+    loginType: opts.loginType,
+    identifier: id,
+    ...(uid ? { supabaseUserId: uid } : {}),
+    createdAt: Date.now(),
+  });
+
+  // With confirm-email OFF, session is present; with ON, account still saved
+  if (data.session || data.user) {
     setLoggedIn(true);
     return { ok: true };
   }
@@ -111,7 +123,7 @@ export async function signIn(opts: {
   if (supabaseConfigured && client && navigator.onLine) {
     const { data, error } = await client.auth.signInWithPassword({ email, password: opts.password });
     if (error) {
-      // Same Supabase message for wrong password AND unknown user — never force signup UI
+      // Never treat wrong password as "sign up"
       if (/invalid login credentials|invalid credentials|wrong password|user not found/i.test(error.message)) {
         return { ok: false, error: "wrong_credentials", detail: error.message };
       }
@@ -153,7 +165,7 @@ export async function requestPasswordReset(emailOrPhone: string, loginType: Logi
   if (!client || !supabaseConfigured) return { ok: false as const, error: "no_cloud" };
   const email = loginType === "email" ? emailOrPhone.trim().toLowerCase() : syntheticEmail(emailOrPhone);
   const { error } = await client.auth.resetPasswordForEmail(email, {
-    redirectTo: typeof window !== "undefined" ? `${window.location.origin}/` : undefined,
+    ...(typeof window !== "undefined" ? { redirectTo: `${window.location.origin}/` } : {}),
   });
   if (error) return { ok: false as const, error: error.message };
   return { ok: true as const };
