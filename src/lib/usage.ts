@@ -1,8 +1,8 @@
 /**
  * Ikayi usage analytics — daily activity log only (pages opened, app opens).
  * No debt, payment or contact data is ever tracked here.
- * Stored on-device, then uploaded at most once per day when the device is
- * online. Separate from credit sync on purpose.
+ * Stored on-device and uploaded whenever there is pending activity and the
+ * signed-in device is online. Separate from credit sync on purpose.
  */
 import { db, type UsageRow } from "@/lib/credit-db";
 import { ensureSupabase, supabaseConfigured } from "@/lib/supabase";
@@ -64,6 +64,11 @@ export async function trackAppOpen(now = Date.now()): Promise<void> {
   await bump(OPEN_PATH, now);
 }
 
+/** Record a privacy-safe event name only; never pass names, phone numbers, or amounts. */
+export async function trackAction(action: "customer_added" | "supplier_added" | "debt_added" | "payment_recorded" | "person_deleted", now = Date.now()): Promise<void> {
+  await bump(`__action:${action}__`, now);
+}
+
 /** Minimal upsert client so tests can inject a fake. */
 export type UsageUploader = {
   from(table: string): { upsert(rows: unknown[], opts: { onConflict: string }): PromiseLike<{ error: { message: string } | null }> };
@@ -109,9 +114,9 @@ export type SendResult =
   | { ok: false; reason: string };
 
 /**
- * Runs on app start and whenever the device comes online. Uploads pending
- * activity at most once per local day; failed or offline attempts are not
- * counted, so the next online moment that day tries again.
+ * Runs after navigation/actions, on app start, and when the device comes
+ * online. Uploads any pending usage-count changes. Failed/offline attempts
+ * remain pending and are retried at the next eligible opportunity.
  */
 export async function maybeSendUsage(now = Date.now()): Promise<SendResult> {
   if (!supabaseConfigured) return { ok: false, reason: "no_cloud" };
