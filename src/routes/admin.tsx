@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { ArrowLeft, BarChart3, Eye, Users } from "lucide-react";
+import { ArrowLeft, BarChart3, Eye, Users, RefreshCw } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { useI18n } from "@/lib/i18n";
@@ -44,6 +44,13 @@ function AdminPage() {
   const rw = lang === "rw";
   const [state, setState] = useState<State>({ status: "loading" });
   const [period, setPeriod] = useState<"7" | "30" | "90" | "365">("30");
+  const [refreshTick, setRefreshTick] = useState(0);
+
+  // Refresh cloud analytics periodically so newly uploaded activity appears without reopening the page.
+  useEffect(() => {
+    const timer = window.setInterval(() => setRefreshTick((tick) => tick + 1), 15000);
+    return () => window.clearInterval(timer);
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -72,7 +79,7 @@ function AdminPage() {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [refreshTick]);
 
   const stats = useMemo(() => {
     if (state.status !== "ready") return null;
@@ -80,6 +87,7 @@ function AdminPage() {
     const periodRows = state.rows.filter((r) => r.day >= cutoff);
     const users = new Map<string, { opens: number; views: number; lastDay: string; devices: Set<string> }>();
     const pages = new Map<string, number>();
+    const actions = new Map<string, number>();
     const days = new Map<string, number>();
     for (const r of periodRows) {
       const u = users.get(r.user_id) ?? { opens: 0, views: 0, lastDay: "", devices: new Set<string>() };
@@ -88,8 +96,12 @@ function AdminPage() {
       if (r.day > u.lastDay) u.lastDay = r.day;
       u.devices.add(r.device_id);
       users.set(r.user_id, u);
-      if (r.path !== OPEN_PATH) pages.set(r.path, (pages.get(r.path) ?? 0) + r.views);
-      else days.set(r.day, (days.get(r.day) ?? 0) + r.views);
+      if (r.path.startsWith("__action:") && r.path.endsWith("__")) {
+        const action = r.path.slice("__action:".length, -2);
+        actions.set(action, (actions.get(action) ?? 0) + r.views);
+      } else if (r.path !== OPEN_PATH) {
+        pages.set(r.path, (pages.get(r.path) ?? 0) + r.views);
+      } else days.set(r.day, (days.get(r.day) ?? 0) + r.views);
     }
     return {
       totalUsers: state.profiles.size,
@@ -97,6 +109,7 @@ function AdminPage() {
       totalViews: [...users.values()].reduce((s, u) => s + u.views, 0),
       users,
       pages: [...pages.entries()].sort((a, b) => b[1] - a[1]),
+      actions: [...actions.entries()].sort((a, b) => b[1] - a[1]),
       days: [...days.entries()].sort((a, b) => b[0].localeCompare(a[0])).slice(0, 14),
     };
   }, [state, period]);
@@ -136,18 +149,36 @@ function AdminPage() {
             <section className="rounded-2xl border bg-card p-4 shadow-card">
               <label className="flex items-center justify-between gap-3 text-sm font-medium">
                 <span>{rw ? "Igihe cyo kureba amakuru" : "Analytics period"}</span>
-                <select aria-label={rw ? "Igihe cyo kureba amakuru" : "Analytics period"} className="rounded-xl border bg-background px-3 py-2" value={period} onChange={(e) => setPeriod(e.target.value as "7" | "30" | "90" | "365")}>
+                <div className="flex items-center gap-2"><Button type="button" variant="outline" className="rounded-xl" onClick={() => setRefreshTick((tick) => tick + 1)}><RefreshCw className="mr-1 size-4" />{rw ? "Vugurura" : "Refresh"}</Button><select aria-label={rw ? "Igihe cyo kureba amakuru" : "Analytics period"} className="rounded-xl border bg-background px-3 py-2" value={period} onChange={(e) => setPeriod(e.target.value as "7" | "30" | "90" | "365")}>
                   <option value="7">{rw ? "Iminsi 7" : "7 days"}</option>
                   <option value="30">{rw ? "Ukwezi" : "30 days"}</option>
                   <option value="90">{rw ? "Iminsi 90" : "90 days"}</option>
                   <option value="365">{rw ? "Umwaka" : "1 year"}</option>
-                </select>
+                </select></div>
               </label>
             </section>
             <section className="grid grid-cols-3 gap-2">
               <Stat icon={<Users className="size-4" />} label={rw ? "Konti zose" : "Signed-up users"} value={stats.totalUsers} />
               <Stat icon={<Eye className="size-4" />} label={rw ? "Bakoresheje muri iki gihe" : "Active in period"} value={stats.activeUsers} />
               <Stat icon={<BarChart3 className="size-4" />} label={rw ? "Paji zafunguwe" : "Page views"} value={stats.totalViews} />
+            </section>
+
+            <section className="rounded-2xl border bg-card p-4 shadow-card">
+              <h2 className="mb-3 text-base font-bold">{rw ? "Ibikorwa by'ingenzi" : "Key actions"}</h2>
+              <ul className="space-y-2">
+                {stats.actions.length === 0 && <li className="text-sm text-muted-foreground">{rw ? "Nta makuru aracyariho." : "No data yet."}</li>}
+                {stats.actions.map(([action, count]) => {
+                  const labels: Record<string, { en: string; rw: string }> = {
+                    customer_added: { en: "Debtors added", rw: "Abagomba kwishyura bongeweho" },
+                    supplier_added: { en: "Creditors added", rw: "Abantu ngomba kwishyura bongeweho" },
+                    debt_added: { en: "Debts recorded", rw: "Amadeni yanditswe" },
+                    payment_recorded: { en: "Payments recorded", rw: "Ubwishyu bwanditswe" },
+                    person_deleted: { en: "People deleted", rw: "Abantu basibwe" },
+                  };
+                  return <li key={action} className="flex items-center justify-between gap-3 text-sm"><span>{labels[action]?.[rw ? "rw" : "en"] ?? action}</span><span className="font-semibold tabular-nums">{count}</span></li>;
+                })}
+              </ul>
+              <p className="mt-3 text-xs text-muted-foreground">{rw ? "Iyi mibare ibara ibikorwa gusa; nta mazina, telefone cyangwa amafaranga yoherezwa muri analytics." : "Counts only; names, phone numbers, amounts, and descriptions are never sent to analytics."}</p>
             </section>
 
             <section className="rounded-2xl border bg-card p-4 shadow-card">
