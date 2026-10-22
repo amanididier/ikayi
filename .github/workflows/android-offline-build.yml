@@ -119,6 +119,45 @@ jobs:
       - name: Copy bundled app into Android project
         run: npx cap sync android
 
+      # Capacitor's generated Android project includes its own default launch icon.
+      # Explicitly install Ikayi's own logo into the native splash and adaptive icon
+      # resources AFTER cap sync, so the Android system splash cannot show the default.
+      - name: Apply Ikayi branding to native Android launch screen and icon
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          from PIL import Image
+          res = Path("android/app/src/main/res")
+          assets = Path("assets")
+          splash = Image.open(assets / "splash.png").convert("RGBA")
+          splash_dir = res / "drawable"
+          splash_dir.mkdir(parents=True, exist_ok=True)
+          splash.save(splash_dir / "splash.png")
+          nodpi = res / "drawable-nodpi"
+          nodpi.mkdir(parents=True, exist_ok=True)
+          splash.save(nodpi / "splash.png")
+          land = res / "drawable-land"
+          land.mkdir(parents=True, exist_ok=True)
+          splash.save(land / "splash.png")
+
+          foreground = Image.open(assets / "icon-foreground.png").convert("RGBA")
+          for folder, size in [
+              ("mipmap-mdpi", 108),
+              ("mipmap-hdpi", 162),
+              ("mipmap-xhdpi", 216),
+              ("mipmap-xxhdpi", 324),
+              ("mipmap-xxxhdpi", 432),
+          ]:
+              d = res / folder
+              d.mkdir(parents=True, exist_ok=True)
+              foreground.resize((size, size), Image.Resampling.LANCZOS).save(d / "ic_launcher_foreground.png")
+          PY
+
+      - name: Verify Ikayi native branding assets
+        run: |
+          test -s android/app/src/main/res/drawable/splash.png
+          test -s android/app/src/main/res/mipmap-xxxhdpi/ic_launcher_foreground.png
+
       - name: Build debug APK
         run: cd android && ./gradlew assembleDebug
 
