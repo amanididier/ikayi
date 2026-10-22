@@ -67,7 +67,7 @@ export function SettingsPage() {
             <Cloud className="size-5" />
           </span>
           <div className="min-w-0 flex-1">
-            <h3 className="text-base font-bold">Cloud Sync</h3>
+            <h3 className="text-base font-bold">{rw ? "Guhuza amakuru kuri murandasi" : "Cloud Sync"}</h3>
             <p className="text-xs text-muted-foreground">
               {supabaseConfigured
                 ? rw
@@ -82,7 +82,7 @@ export function SettingsPage() {
         <div className="flex flex-wrap gap-2">
           <Button disabled={syncing} className="h-10 rounded-full" onClick={() => void syncNow()}>
             <RefreshCw className={`size-3.5 ${syncing ? "animate-spin" : ""}`} />
-            Sync
+            {rw ? "Huza amakuru" : "Sync"}
           </Button>
           <Button
             variant={auto ? "default" : "outline"}
@@ -92,7 +92,7 @@ export function SettingsPage() {
               toast.success(auto ? (rw ? "Auto-sync yahagaritswe" : "Auto-sync off") : rw ? "Auto-sync yashyizweho" : "Auto-sync on");
             }}
           >
-            {auto ? "Auto" : "Manual"}
+            {auto ? (rw ? "Byikora" : "Auto") : (rw ? "Intoki" : "Manual")}
           </Button>
         </div>
       </section>
