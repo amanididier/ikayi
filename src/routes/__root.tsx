@@ -16,6 +16,7 @@ import { reportLovableError } from "../lib/lovable-error-reporting";
 import { I18nProvider } from "@/lib/i18n";
 import { Toaster } from "@/components/ui/sonner";
 import { maybeSendUsage, trackAppOpen, trackPageView } from "@/lib/usage";
+import { fullSync } from "@/lib/sync";
 
 function NotFoundComponent() {
   return (
@@ -125,14 +126,25 @@ function RootComponent() {
 
   // Usage analytics: record page views locally, upload at most once per day when online.
   useEffect(() => {
-    void trackPageView(path);
+    let cancelled = false;
+    void (async () => {
+      await trackPageView(path);
+      if (!cancelled) await maybeSendUsage();
+    })();
+    return () => { cancelled = true; };
   }, [path]);
   useEffect(() => {
-    void trackAppOpen();
-    const send = () => void maybeSendUsage();
-    send();
-    window.addEventListener("online", send);
-    return () => window.removeEventListener("online", send);
+    const send = async () => {
+      await trackAppOpen();
+      await maybeSendUsage();
+      if (localStorage.getItem("ikayi-sync-mode") === "auto" && navigator.onLine) {
+        await fullSync();
+      }
+    };
+    void send();
+    const onOnline = () => void send();
+    window.addEventListener("online", onOnline);
+    return () => window.removeEventListener("online", onOnline);
   }, []);
 
   return (
