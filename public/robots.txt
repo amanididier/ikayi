@@ -13,4 +13,4 @@ Allow: /
 User-agent: *
 Allow: /
 
-Sitemap: https://ikayi.rw/sitemap.xml
+Sitemap: https://ikayi-yange.vercel.app/sitemap.xml
