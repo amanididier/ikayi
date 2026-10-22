@@ -4,6 +4,7 @@ create table if not exists public.profiles (
   id uuid primary key references auth.users (id) on delete cascade,
   full_name text default '',
   phone text default '',
+  created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
 
@@ -49,7 +50,10 @@ alter table public.debts enable row level security;
 alter table public.payments enable row level security;
 
 drop policy if exists "profiles_own" on public.profiles;
-create policy "profiles_own" on public.profiles for all using (auth.uid() = id) with check (auth.uid() = id);
+create policy "profiles_own" on public.profiles for all to authenticated using (auth.uid() = id) with check (auth.uid() = id);
+drop policy if exists "profiles_admin_read" on public.profiles;
+create policy "profiles_admin_read" on public.profiles for select to authenticated
+using (auth.uid() = id or exists (select 1 from public.app_admins a where a.user_id = (select auth.uid())));
 
 drop policy if exists "parties_all_own" on public.parties;
 create policy "parties_all_own" on public.parties for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
@@ -103,3 +107,39 @@ create policy "usage_select_own_or_admin" on public.usage_daily for select
 
 -- To make yourself admin: copy your user id from Authentication → Users, then run:
 -- insert into public.app_admins (user_id) values ('PASTE-YOUR-USER-UUID') on conflict do nothing;
+
+
+-- Automatically maintain a safe public profile row for each Ikayi Auth user.
+alter table public.profiles add column if not exists created_at timestamptz not null default now();
+create or replace function public.handle_new_ikayi_user()
+returns trigger language plpgsql security definer set search_path = ''
+as $$
+begin
+  insert into public.profiles (id, full_name, phone, created_at, updated_at)
+  values (
+    new.id,
+    coalesce(new.raw_user_meta_data ->> 'full_name', ''),
+    coalesce(new.raw_user_meta_data ->> 'identifier', ''),
+    coalesce(new.created_at, now()),
+    now()
+  )
+  on conflict (id) do update set
+    full_name = coalesce(nullif(excluded.full_name, ''), public.profiles.full_name),
+    phone = coalesce(nullif(excluded.phone, ''), public.profiles.phone),
+    updated_at = now();
+  return new;
+end;
+$$;
+drop trigger if exists on_ikayi_auth_user_created on auth.users;
+create trigger on_ikayi_auth_user_created after insert on auth.users
+for each row execute function public.handle_new_ikayi_user();
+
+insert into public.profiles (id, full_name, phone, created_at, updated_at)
+select u.id, coalesce(u.raw_user_meta_data ->> 'full_name', ''),
+       coalesce(u.raw_user_meta_data ->> 'identifier', ''),
+       coalesce(u.created_at, now()), now()
+from auth.users u
+on conflict (id) do update set
+  full_name = coalesce(nullif(excluded.full_name, ''), public.profiles.full_name),
+  phone = coalesce(nullif(excluded.phone, ''), public.profiles.phone),
+  updated_at = now();
