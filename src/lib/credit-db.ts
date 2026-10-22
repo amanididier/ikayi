@@ -2,15 +2,18 @@ import Dexie, { type Table } from 'dexie';
 export type PartyKind = 'customer' | 'supplier';
 export type Party = { id: number; name: string; phone: string; kind: PartyKind; createdAt: number };
 export type Entry = { id: number; partyId: number; amount: number; createdAt: number; description?: string; dueDays?: number };
+export type UsageRow = { date: string; path: string; views: number; reported: number };
 class CreditDB extends Dexie {
-  parties: Table<Party, number>;
-  debts: Table<Entry, number>;
-  payments: Table<Entry, number>;
-  settings: Table<{key:string;value:string}, string>;
+  parties!: Table<Party, number>;
+  debts!: Table<Entry, number>;
+  payments!: Table<Entry, number>;
+  settings!: Table<{key:string;value:string}, string>;
+  usage!: Table<UsageRow, [string, string]>;
   constructor() {
     super('ikayi-credit');
     this.version(1).stores({parties:'id,kind,name',debts:'id,partyId,createdAt',payments:'id,partyId,createdAt',settings:'key'});
-    this.parties=this.table('parties'); this.debts=this.table('debts'); this.payments=this.table('payments'); this.settings=this.table('settings');
+    this.version(2).stores({parties:'id,kind,name',debts:'id,partyId,createdAt',payments:'id,partyId,createdAt',settings:'key',usage:'[date+path],date'});
+    this.parties=this.table('parties'); this.debts=this.table('debts'); this.payments=this.table('payments'); this.settings=this.table('settings'); this.usage=this.table('usage');
   }
 }
 export const db = new CreditDB();
