@@ -192,3 +192,95 @@ input, textarea, select, button {
     animation-duration: 0.01ms !important;
   }
 }
+
+
+/* Branded native/PWA startup screen — no spinner, no logo card. */
+.ikayi-startup {
+  min-height: 100dvh;
+  min-height: 100svh;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: max(28px, env(safe-area-inset-top)) 28px max(28px, env(safe-area-inset-bottom));
+  background: var(--background);
+  color: var(--foreground);
+  overflow: hidden;
+}
+.ikayi-startup-content {
+  display: flex;
+  width: 100%;
+  max-width: 320px;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  transform: translateY(-2vh);
+}
+.ikayi-startup-logo {
+  display: block;
+  width: 112px;
+  height: 112px;
+  object-fit: contain;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  margin-bottom: 24px;
+  animation: ikayi-logo-enter 420ms ease-out both;
+}
+.ikayi-startup-title {
+  margin: 0;
+  font-size: 27px;
+  line-height: 1.2;
+  font-weight: 700;
+  letter-spacing: -0.035em;
+}
+.ikayi-startup-description {
+  margin: 10px 0 0;
+  color: var(--muted-foreground);
+  font-size: 14px;
+  line-height: 1.55;
+}
+.ikayi-startup-track {
+  position: relative;
+  width: min(100%, 260px);
+  height: 5px;
+  margin-top: 38px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: color-mix(in oklab, var(--primary) 13%, transparent);
+}
+.ikayi-startup-track span {
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 42%;
+  border-radius: inherit;
+  background: var(--primary);
+  transform-origin: left center;
+}
+.ikayi-startup-track span.is-loading {
+  animation: ikayi-progress 1.35s cubic-bezier(.45, 0, .35, 1) infinite;
+}
+.ikayi-startup-track span.is-ready {
+  width: 100%;
+  transition: width 180ms ease-out;
+}
+.ikayi-startup-status {
+  min-height: 18px;
+  margin: 13px 0 0;
+  color: var(--muted-foreground);
+  font-size: 12px;
+  line-height: 1.5;
+}
+@keyframes ikayi-progress {
+  0% { left: 0; width: 24%; }
+  50% { left: 34%; width: 48%; }
+  100% { left: 100%; width: 24%; }
+}
+@keyframes ikayi-logo-enter {
+  from { opacity: 0; transform: translateY(5px) scale(.97); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .ikayi-startup-logo { animation: none; }
+  .ikayi-startup-track span.is-loading { animation-duration: 3s; }
+}
