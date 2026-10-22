@@ -4,6 +4,7 @@ import {
   Link,
   createRootRouteWithContext,
   useRouter,
+  useRouterState,
   HeadContent,
   Scripts,
   type ErrorComponentProps,
@@ -14,6 +15,7 @@ import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { I18nProvider } from "@/lib/i18n";
 import { Toaster } from "@/components/ui/sonner";
+import { maybeSendUsage, trackAppOpen, trackPageView } from "@/lib/usage";
 
 function NotFoundComponent() {
   return (
@@ -47,9 +49,7 @@ function ErrorComponent({ error, reset }: ErrorComponentProps) {
   return (
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
       <div className="max-w-md text-center">
-        <h1 className="text-xl font-semibold tracking-tight text-foreground">
-          This page didn't load
-        </h1>
+        <h1 className="text-xl font-semibold tracking-tight text-foreground">This page didn't load</h1>
         <p className="mt-2 text-sm text-muted-foreground">
           Something went wrong on our end. You can try refreshing or head back home.
         </p>
@@ -80,21 +80,21 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Ikayi — Ikayi y’amadeni" },
-      { name: "description", content: "Ikayi y’amadeni n’ubwishyu bwawe." },
-      { name: "author", content: "Ikayi" },
-      { property: "og:title", content: "Ikayi — Ikayi y’amadeni" },
-      { property: "og:description", content: "Ikayi y’amadeni n’ubwishyu bwawe." },
+      { title: "Ikayi Yange — Ikayi y'amadeni" },
+      { name: "description", content: "Ikayi Yange: amadeni n'ubwishyu bwawe." },
+      { name: "author", content: "Ikayi Yange" },
+      { property: "og:title", content: "Ikayi Yange — Ikayi y'amadeni" },
+      { property: "og:description", content: "Ikayi Yange: amadeni n'ubwishyu bwawe." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
     ],
     links: [
+      { rel: "stylesheet", href: appCss },
+      { rel: "icon", href: "/favicon.png", type: "image/png" },
       {
         rel: "stylesheet",
-        href: appCss,
+        href: "https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&display=swap",
       },
-      { rel: "icon", href: "/favicon.png", type: "image/png" },
-      { rel: "stylesheet", href: "https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&display=swap" },
     ],
   }),
   shellComponent: RootShell,
@@ -119,11 +119,25 @@ function RootShell({ children }: { children: ReactNode }) {
 
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
+  const path = useRouterState({ select: (s) => s.location.pathname });
+
+  useEffect(() => {
+    void trackPageView(path);
+  }, [path]);
+  useEffect(() => {
+    void trackAppOpen();
+    const send = () => void maybeSendUsage();
+    send();
+    window.addEventListener("online", send);
+    return () => window.removeEventListener("online", send);
+  }, []);
 
   return (
     <QueryClientProvider client={queryClient}>
-      {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
-      <I18nProvider><Outlet /><Toaster /></I18nProvider>
+      <I18nProvider>
+        <Outlet />
+        <Toaster />
+      </I18nProvider>
     </QueryClientProvider>
   );
 }
