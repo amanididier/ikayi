@@ -75,8 +75,8 @@ describe("daily upload", () => {
     const res = await uploadUsage(client, "user-1", T0);
     expect(res.ok).toBe(true);
     expect(calls).toHaveLength(1);
-    expect(calls[0].rows).toHaveLength(2);
-    const home = calls[0].rows.find((r) => (r as { path: string }).path === "/") as { views: number; user_id: string };
+    expect(calls[0]!.rows).toHaveLength(2);
+    const home = calls[0]!.rows.find((r) => (r as { path: string }).path === "/") as { views: number; user_id: string };
     expect(home.views).toBe(2);
     expect(home.user_id).toBe("user-1");
     // Nothing left to report for today, so a second upload sends no rows.

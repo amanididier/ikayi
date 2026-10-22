@@ -124,11 +124,11 @@ export async function pullCredit(
       if (remoteParties.length) {
         await db.parties.bulkPut(
           remoteParties.map((p: Record<string, unknown>) => ({
-            id: Number(p.local_id),
-            name: String(p.name ?? ""),
-            phone: String(p.phone ?? ""),
-            kind: (p.kind === "supplier" ? "supplier" : "customer") as "customer" | "supplier",
-            createdAt: p.created_at ? new Date(String(p.created_at)).getTime() : Date.now(),
+            id: Number(p["local_id"]),
+            name: String(p["name"] ?? ""),
+            phone: String(p["phone"] ?? ""),
+            kind: (p["kind"] === "supplier" ? "supplier" : "customer") as "customer" | "supplier",
+            createdAt: p["created_at"] ? new Date(String(p["created_at"])).getTime() : Date.now(),
           })),
         );
       }
@@ -227,6 +227,6 @@ export async function checkRemoteAhead(): Promise<{ ahead: boolean }> {
     .limit(1);
 
   if (!data?.length) return { ahead: false };
-  const remoteTs = new Date(data[0].created_at).getTime();
+  const remoteTs = new Date(data[0]?.created_at ?? 0).getTime();
   return { ahead: remoteTs > localMax + 2000 };
 }
