@@ -51,9 +51,7 @@ alter table public.payments enable row level security;
 
 drop policy if exists "profiles_own" on public.profiles;
 create policy "profiles_own" on public.profiles for all to authenticated using (auth.uid() = id) with check (auth.uid() = id);
-drop policy if exists "profiles_admin_read" on public.profiles;
-create policy "profiles_admin_read" on public.profiles for select to authenticated
-using (auth.uid() = id or exists (select 1 from public.app_admins a where a.user_id = (select auth.uid())));
+
 
 drop policy if exists "parties_all_own" on public.parties;
 create policy "parties_all_own" on public.parties for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
@@ -69,6 +67,10 @@ create policy "payments_all_own" on public.payments for all using (auth.uid() = 
 create table if not exists public.app_admins (
   user_id uuid primary key references auth.users (id) on delete cascade
 );
+
+drop policy if exists "profiles_admin_read" on public.profiles;
+create policy "profiles_admin_read" on public.profiles for select to authenticated
+using (auth.uid() = id or exists (select 1 from public.app_admins a where a.user_id = (select auth.uid())));
 
 create table if not exists public.usage_daily (
   id bigserial primary key,
