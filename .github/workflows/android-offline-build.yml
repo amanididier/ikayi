@@ -99,48 +99,28 @@ jobs:
           draw.text(((2732 - (bounds[2] - bounds[0])) // 2, 1730), label, fill="#382B24", font=font)
           splash.save(out / "splash.png")
           splash.save(out / "splash-dark.png")
-
-          # Write default Android mipmap-ish icon into res if present after cap add
-          android_res = Path("android/app/src/main/res")
-          if android_res.exists():
-              for folder, size in [
-                  ("mipmap-mdpi", 48),
-                  ("mipmap-hdpi", 72),
-                  ("mipmap-xhdpi", 96),
-                  ("mipmap-xxhdpi", 144),
-                  ("mipmap-xxxhdpi", 192),
-              ]:
-                  d = android_res / folder
-                  d.mkdir(parents=True, exist_ok=True)
-                  source.resize((size, size), Image.Resampling.LANCZOS).save(d / "ic_launcher.png")
-                  source.resize((size, size), Image.Resampling.LANCZOS).save(d / "ic_launcher_round.png")
           PY
 
       - name: Copy bundled app into Android project
         run: npx cap sync android
 
-      # Capacitor's generated Android project includes its own default launch icon.
-      # Explicitly install Ikayi's own logo into the native splash and adaptive icon
-      # resources AFTER cap sync, so the Android system splash cannot show the default.
       - name: Apply Ikayi branding to native Android launch screen and icon
         run: |
           python - <<'PY'
           from pathlib import Path
           from PIL import Image
+
           res = Path("android/app/src/main/res")
           assets = Path("assets")
           splash = Image.open(assets / "splash.png").convert("RGBA")
-          splash_dir = res / "drawable"
-          splash_dir.mkdir(parents=True, exist_ok=True)
-          splash.save(splash_dir / "splash.png")
-          nodpi = res / "drawable-nodpi"
-          nodpi.mkdir(parents=True, exist_ok=True)
-          splash.save(nodpi / "splash.png")
-          land = res / "drawable-land"
-          land.mkdir(parents=True, exist_ok=True)
-          splash.save(land / "splash.png")
+          for folder in ("drawable", "drawable-nodpi", "drawable-land"):
+              d = res / folder
+              d.mkdir(parents=True, exist_ok=True)
+              splash.save(d / "splash.png")
 
+          logo = Image.open(assets / "icon-only.png").convert("RGBA")
           foreground = Image.open(assets / "icon-foreground.png").convert("RGBA")
+          bg = Image.new("RGBA", (432, 432), (250, 248, 245, 255))
           for folder, size in [
               ("mipmap-mdpi", 108),
               ("mipmap-hdpi", 162),
@@ -151,12 +131,55 @@ jobs:
               d = res / folder
               d.mkdir(parents=True, exist_ok=True)
               foreground.resize((size, size), Image.Resampling.LANCZOS).save(d / "ic_launcher_foreground.png")
+              bg.resize((size, size), Image.Resampling.LANCZOS).save(d / "ic_launcher_background.png")
+              logo.resize((size, size), Image.Resampling.LANCZOS).save(d / "ic_launcher.png")
+              logo.resize((size, size), Image.Resampling.LANCZOS).save(d / "ic_launcher_round.png")
+
+          anydpi = res / "mipmap-anydpi-v26"
+          anydpi.mkdir(parents=True, exist_ok=True)
+          adaptive = """<?xml version=\"1.0\" encoding=\"utf-8\"?>
+<adaptive-icon xmlns:android=\"http://schemas.android.com/apk/res/android\">
+    <background android:drawable=\"@mipmap/ic_launcher_background\"/>
+    <foreground android:drawable=\"@mipmap/ic_launcher_foreground\"/>
+</adaptive-icon>
+"""
+          for name in ("ic_launcher", "ic_launcher_round"):
+              (anydpi / f"{name}.xml").write_text(adaptive)
+
+          values = res / "values"
+          values.mkdir(parents=True, exist_ok=True)
+          (values / "styles.xml").write_text("""<?xml version=\"1.0\" encoding=\"utf-8\"?>
+<resources>
+    <style name=\"AppTheme\" parent=\"Theme.AppCompat.Light.DarkActionBar\">
+        <item name=\"colorPrimary\">#E87828</item>
+        <item name=\"colorPrimaryDark\">#D45A12</item>
+        <item name=\"colorAccent\">#E87828</item>
+        <item name=\"android:statusBarColor\">#FAF8F5</item>
+        <item name=\"android:navigationBarColor\">#FAF8F5</item>
+        <item name=\"android:windowBackground\">@drawable/splash</item>
+    </style>
+    <style name=\"AppTheme.NoActionBar\" parent=\"Theme.AppCompat.DayNight.NoActionBar\">
+        <item name=\"windowActionBar\">false</item>
+        <item name=\"windowNoTitle\">true</item>
+        <item name=\"android:windowBackground\">@drawable/splash</item>
+        <item name=\"android:statusBarColor\">#FAF8F5</item>
+        <item name=\"android:navigationBarColor\">#FAF8F5</item>
+    </style>
+    <style name=\"AppTheme.NoActionBarLaunch\" parent=\"Theme.SplashScreen\">
+        <item name=\"android:windowBackground\">@drawable/splash</item>
+        <item name=\"windowSplashScreenBackground\">#FAF8F5</item>
+        <item name=\"windowSplashScreenAnimatedIcon\">@mipmap/ic_launcher_foreground</item>
+        <item name=\"postSplashScreenTheme\">@style/AppTheme.NoActionBar</item>
+    </style>
+</resources>
+""")
           PY
 
       - name: Verify Ikayi native branding assets
         run: |
           test -s android/app/src/main/res/drawable/splash.png
           test -s android/app/src/main/res/mipmap-xxxhdpi/ic_launcher_foreground.png
+          test -s android/app/src/main/res/mipmap-xxxhdpi/ic_launcher.png
 
       - name: Build debug APK
         run: cd android && ./gradlew assembleDebug
