@@ -1,8 +1,9 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { Capacitor } from "@capacitor/core";
 import { useEffect, useState } from "react";
 import { Shell } from "@/components/ikayi/Shell";
 import { SettingsPage } from "@/components/ikayi/SettingsPage";
-import { isAppMode } from "@/lib/app-mode";
+import { enterAppMode, isAppMode, isNativePlatform } from "@/lib/app-mode";
 
 export const Route = createFileRoute("/settings")({
   head: () => ({
@@ -13,10 +14,11 @@ export const Route = createFileRoute("/settings")({
 
 function SettingsEntry() {
   const navigate = useNavigate();
-  const [showApp, setShowApp] = useState(false);
+  const [showApp, setShowApp] = useState(() => isNativePlatform() || isAppMode());
 
   useEffect(() => {
-    if (isAppMode()) {
+    if (Capacitor.isNativePlatform() || isNativePlatform() || isAppMode()) {
+      enterAppMode();
       setShowApp(true);
       return;
     }

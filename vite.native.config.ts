@@ -1,4 +1,4 @@
-// Native bundle — keep normal web/Vercel build in vite.config.ts unchanged.
+// Native APK bundle — marketing routes are still in the tree but entry always opens the app.
 import { defineConfig } from "@lovable.dev/vite-tanstack-config";
 
 export default defineConfig({
@@ -15,6 +15,10 @@ export default defineConfig({
   },
   vite: {
     envPrefix: ["VITE_", "NEXT_PUBLIC_"],
+    define: {
+      // App-mode always on inside the APK WebView
+      "import.meta.env.VITE_NATIVE": JSON.stringify("1"),
+    },
     plugins: [
       {
         name: "ikayi-yange-native-pwa-register-stub",

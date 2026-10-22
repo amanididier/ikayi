@@ -1,8 +1,9 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { Capacitor } from "@capacitor/core";
 import { useEffect, useState } from "react";
 import { Shell } from "@/components/ikayi/Shell";
 import { CreditBook } from "@/components/ikayi/CreditBook";
-import { enterAppMode, isAppMode } from "@/lib/app-mode";
+import { enterAppMode, isAppMode, isNativePlatform } from "@/lib/app-mode";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -10,27 +11,29 @@ export const Route = createFileRoute("/")({
       { title: "Ikayi Yange" },
       {
         name: "description",
-        content: "Ikayi Yange: andika amadeni, ubwishyu, cloud sync. Shyiramo app cyangwa fungura.",
+        content: "Ikayi Yange: andika amadeni, ubwishyu, cloud sync.",
       },
-      { property: "og:title", content: "Ikayi Yange — Ikayi y'amadeni" },
-      { property: "og:type", content: "website" },
-      { name: "twitter:card", content: "summary_large_image" },
     ],
   }),
   component: RootEntry,
 });
 
 /**
- * Shared link https://ikayi-yange.vercel.app/
- * - Browser (not installed): → landing /welcome
- * - Installed APK / PWA / "Open app": → credit book (never marketing again)
+ * Browser → /welcome marketing.
+ * APK / PWA / Open app → credit book only (never marketing).
  */
 function RootEntry() {
   const navigate = useNavigate();
-  const [showApp, setShowApp] = useState(false);
+  const [showApp, setShowApp] = useState(() => isNativePlatform() || isAppMode());
 
   useEffect(() => {
     if (typeof window !== "undefined" && window.location.hash.includes("type=recovery")) {
+      enterAppMode();
+      setShowApp(true);
+      return;
+    }
+    // Capacitor APK: always the app — never /welcome
+    if (Capacitor.isNativePlatform() || isNativePlatform()) {
       enterAppMode();
       setShowApp(true);
       return;
