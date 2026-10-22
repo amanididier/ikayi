@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AdminRouteImport } from './routes/admin'
 import { Route as IOweRouteImport } from './routes/i-owe'
 import { Route as InstallAndroidRouteImport } from './routes/install-android'
 import { Route as SettingsRouteImport } from './routes/settings'
@@ -18,6 +19,11 @@ import { Route as WelcomeRouteImport } from './routes/welcome'
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminRoute = AdminRouteImport.update({
+  id: '/admin',
+  path: '/admin',
   getParentRoute: () => rootRouteImport,
 } as any)
 const IOweRoute = IOweRouteImport.update({
@@ -43,6 +49,7 @@ const WelcomeRoute = WelcomeRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/admin': typeof AdminRoute
   '/i-owe': typeof IOweRoute
   '/install-android': typeof InstallAndroidRoute
   '/settings': typeof SettingsRoute
@@ -50,6 +57,7 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/admin': typeof AdminRoute
   '/i-owe': typeof IOweRoute
   '/install-android': typeof InstallAndroidRoute
   '/settings': typeof SettingsRoute
@@ -58,6 +66,7 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/admin': typeof AdminRoute
   '/i-owe': typeof IOweRoute
   '/install-android': typeof InstallAndroidRoute
   '/settings': typeof SettingsRoute
@@ -65,15 +74,23 @@ export interface FileRoutesById {
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/i-owe' | '/install-android' | '/settings' | '/welcome'
+  fullPaths:
+    '/' | '/admin' | '/i-owe' | '/install-android' | '/settings' | '/welcome'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/i-owe' | '/install-android' | '/settings' | '/welcome'
+  to: '/' | '/admin' | '/i-owe' | '/install-android' | '/settings' | '/welcome'
   id:
-    '__root__' | '/' | '/i-owe' | '/install-android' | '/settings' | '/welcome'
+    | '__root__'
+    | '/'
+    | '/admin'
+    | '/i-owe'
+    | '/install-android'
+    | '/settings'
+    | '/welcome'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AdminRoute: typeof AdminRoute
   IOweRoute: typeof IOweRoute
   InstallAndroidRoute: typeof InstallAndroidRoute
   SettingsRoute: typeof SettingsRoute
@@ -87,6 +104,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin': {
+      id: '/admin'
+      path: '/admin'
+      fullPath: '/admin'
+      preLoaderRoute: typeof AdminRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/i-owe': {
@@ -122,6 +146,7 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AdminRoute: AdminRoute,
   IOweRoute: IOweRoute,
   InstallAndroidRoute: InstallAndroidRoute,
   SettingsRoute: SettingsRoute,
