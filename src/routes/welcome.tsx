@@ -21,7 +21,7 @@ export const Route = createFileRoute("/welcome")({
       {
         name: "description",
         content:
-          "Ikayi Yange ni application yo gucunga amadeni n'ubwishyu. Barandenze, ndenze, cloud sync. Ikora nta murandasi.",
+          "Ikayi Yange ni application yo gucunga amadeni n'ubwishyu. Abandimo amadeni, abo ndimo amadeni, cloud sync. Ikora nta murandasi.",
       },
       { property: "og:title", content: "Ikayi Yange | Ikayi y'amadeni yawe" },
       { property: "og:locale", content: "rw_RW" },
@@ -60,13 +60,13 @@ const copy = {
     s1t: "Install",
     s1d: "Add Ikayi Yange to your phone.",
     s2t: "Add people",
-    s2d: "Debtors and creditors with optional deadlines.",
+    s2d: "Who owes you and who you owe, with optional deadlines.",
     s3t: "Track & sync",
     s3d: "Record payments. Share the same business account.",
     offlineTitle: "No internet? No problem.",
     offlineBody: "Debts and payments save on your phone. When you connect, they go to the cloud.",
     roadmapTitle: "Roadmap",
-    r1: "Credit book (owes me / I owe)",
+    r1: "Credit book (who owes you / who you owe)",
     r2: "Cloud sync across phones",
     r3: "Android APK install",
     r4: "WhatsApp reminders",
@@ -87,10 +87,10 @@ const copy = {
     ctaSub: "Shyiramo rimwe. Amadeni abikwa kuri telefone kandi ahura iyo uhujwe.",
     footer: "Ikayi Yange · Ikayi y'amadeni yawe",
     contact: "Ubufasha",
-    f1t: "Barandenze",
-    f1d: "Abakiriya n'asigaye, amateka, n'ibibutsa.",
-    f2t: "Ndenze",
-    f2d: "Abo mubereyemo — menya balance n'ubwishyu.",
+    f1t: "Abandimo amadeni",
+    f1d: "Abantu bandimo — balance, amateka, n'ibibutsa.",
+    f2t: "Abo ndimo amadeni",
+    f2d: "Abo ndimo amadeni — menya balance n'ubwishyu.",
     f3t: "Ikora nta murandasi",
     f3d: "Nta signal? Komeza wandika. Sync nyuma.",
     f4t: "Cloud sync",
@@ -98,13 +98,13 @@ const copy = {
     s1t: "Shyiramo",
     s1d: "Ongeraho Ikayi Yange kuri telefone yawe.",
     s2t: "Ongeraho abantu",
-    s2d: "Barandenze n'abo mubereyemo, n'igihe niba ushaka.",
+    s2d: "Abandimo amadeni n'abo ndimo, n'igihe niba ushaka.",
     s3t: "Kurikirana & sync",
     s3d: "Andika ubwishyu. Koresha konti imwe y'ubucuruzi.",
     offlineTitle: "Nta murandasi? Nta kibazo.",
     offlineBody: "Amadeni n'ubwishyu bibikwa kuri telefone. Iyo uhujwe, bijya kuri cloud.",
     roadmapTitle: "Uko tugiye",
-    r1: "Ikayi y'amadeni (barandenze / ndenze)",
+    r1: "Ikayi y'amadeni (Abandimo amadeni / Abo ndimo amadeni)",
     r2: "Cloud sync kuri telefone nyinshi",
     r3: "Gushyiramo APK ya Android",
     r4: "Ibutsa kuri WhatsApp",
@@ -120,7 +120,6 @@ function WelcomePage() {
   const [lang, setLang] = useState<Lang>("rw");
   const t = copy[lang];
 
-  // APK must never show marketing — bounce to credit book
   useEffect(() => {
     if (Capacitor.isNativePlatform() || isNativePlatform()) {
       enterAppMode();
