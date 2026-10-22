@@ -4,6 +4,7 @@ import {
   Link,
   createRootRouteWithContext,
   useRouter,
+  useRouterState,
   HeadContent,
   Scripts,
   type ErrorComponentProps,
@@ -14,6 +15,7 @@ import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { I18nProvider } from "@/lib/i18n";
 import { Toaster } from "@/components/ui/sonner";
+import { maybeSendUsage, trackAppOpen, trackPageView } from "@/lib/usage";
 
 function NotFoundComponent() {
   return (
@@ -119,6 +121,19 @@ function RootShell({ children }: { children: ReactNode }) {
 
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
+  const path = useRouterState({ select: (s) => s.location.pathname });
+
+  // Usage analytics: record page views locally, upload at most once per day when online.
+  useEffect(() => {
+    void trackPageView(path);
+  }, [path]);
+  useEffect(() => {
+    void trackAppOpen();
+    const send = () => void maybeSendUsage();
+    send();
+    window.addEventListener("online", send);
+    return () => window.removeEventListener("online", send);
+  }, []);
 
   return (
     <QueryClientProvider client={queryClient}>

@@ -59,3 +59,47 @@ create policy "debts_all_own" on public.debts for all using (auth.uid() = user_i
 
 drop policy if exists "payments_all_own" on public.payments;
 create policy "payments_all_own" on public.payments for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
+
+-- ===== Usage analytics (daily activity only — no debt/payment data) =====
+
+create table if not exists public.app_admins (
+  user_id uuid primary key references auth.users (id) on delete cascade
+);
+
+create table if not exists public.usage_daily (
+  id bigserial primary key,
+  user_id uuid not null references auth.users (id) on delete cascade,
+  device_id text not null default '',
+  day date not null,
+  path text not null,
+  views integer not null default 0,
+  updated_at timestamptz not null default now(),
+  unique (user_id, device_id, day, path)
+);
+create index if not exists usage_daily_user_idx on public.usage_daily (user_id);
+
+grant select on public.app_admins to authenticated;
+grant all on public.app_admins to service_role;
+grant select, insert, update on public.usage_daily to authenticated;
+grant all on public.usage_daily to service_role;
+
+alter table public.app_admins enable row level security;
+alter table public.usage_daily enable row level security;
+
+-- A user can only check their own admin membership
+drop policy if exists "admins_self_read" on public.app_admins;
+create policy "admins_self_read" on public.app_admins for select using (auth.uid() = user_id);
+
+-- Users upload and read only their own usage; admins can read everyone's
+drop policy if exists "usage_own_insert" on public.usage_daily;
+create policy "usage_own_insert" on public.usage_daily for insert with check (auth.uid() = user_id);
+
+drop policy if exists "usage_own_update" on public.usage_daily;
+create policy "usage_own_update" on public.usage_daily for update using (auth.uid() = user_id) with check (auth.uid() = user_id);
+
+drop policy if exists "usage_select_own_or_admin" on public.usage_daily;
+create policy "usage_select_own_or_admin" on public.usage_daily for select
+  using (auth.uid() = user_id or exists (select 1 from public.app_admins a where a.user_id = auth.uid()));
+
+-- To make yourself admin: copy your user id from Authentication → Users, then run:
+-- insert into public.app_admins (user_id) values ('PASTE-YOUR-USER-UUID') on conflict do nothing;
