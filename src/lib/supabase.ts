@@ -5,8 +5,8 @@
  */
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 
-const DEFAULT_URL = "https://hdsoxtlruzuadsqkapls.supabase.co";
-const DEFAULT_PUBLISHABLE_KEY = "sb_publishable_Te3LfkYrNP1v2gUSqkcpDg_SupfSYqJ";
+const DEFAULT_URL = "https://tngyfjxkpwayctrprftq.supabase.co";
+const DEFAULT_PUBLISHABLE_KEY = "sb_publishable_6Qyi9QrK0_Ir2MsX2j1kVg_Hljim-mT";
 
 function pickEnv(...names: string[]): string | undefined {
   const env = import.meta.env as Record<string, string | undefined>;
@@ -84,7 +84,7 @@ export async function checkCloudHealth(): Promise<CloudHealth> {
 
   if (!supabaseConfigured || !supabase) {
     base.message =
-      "Supabase public key is missing from this build. Rebuild with NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY.";
+      "Supabase public key is missing from this build. Set VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY in Vercel, then redeploy.";
     return base;
   }
   if (!base.online) {
