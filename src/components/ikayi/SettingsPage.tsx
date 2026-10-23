@@ -41,6 +41,8 @@ export function SettingsPage() {
       } else {
         toast.error(rw ? `Sync yanze: ${result.reason}` : `Sync failed: ${result.reason}`);
       }
+    } catch {
+      toast.error(rw ? "Sync yanze. Ongera ugerageze; amakuru yawe aracyari kuri iyi telefone." : "Sync failed. Try again; your data is still on this device.");
     } finally {
       setSyncing(false);
     }
