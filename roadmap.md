@@ -1,4 +1,6 @@
 # Tasks
+- [ ] Remove the default native Capacitor startup screen without changing the working launcher logo; verify native patch resources.
+- [ ] Verify daily background activity reporting and manual credit sync, fix confirmed issues, and report live-service verification limits.
 - [x] Refine the chosen Option 2 logo with centered generic cash notes and a left-side pen; inspect and deliver.
 - [x] Build the separate Ikayi credit pages and settings from the attached brief, using Stoke Yange as reference only; leave Stoke Yange unchanged.
 - [x] Improve indexed credit reads and balance aggregation; verify adding credit, payment, persistence, navigation and device reset, with seven passing tests.
