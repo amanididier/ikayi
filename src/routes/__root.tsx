@@ -135,7 +135,17 @@ html,body{margin:0;min-height:100%;background:#FAF8F5;color:#382B24}
         <Scripts />
         <script
           dangerouslySetInnerHTML={{
-            __html: `window.__ikayiHideBoot=function(){var e=document.getElementById("ikayi-boot");if(e)e.setAttribute("data-done","1");};`,
+            __html: `(function(){
+  window.__ikayiHideBoot=function(){var e=document.getElementById("ikayi-boot");if(e)e.setAttribute("data-done","1");};
+  // Marketing website (browser): remove boot immediately — only the APK needs the long boot.
+  try {
+    var ua = navigator.userAgent || "";
+    var native = /Capacitor/i.test(ua) || (window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform());
+    var path = (location.pathname || "");
+    var landing = path === "/welcome" || path.indexOf("/welcome/") === 0 || path === "/install-android" || path.indexOf("/install-android/") === 0;
+    if (!native || landing) window.__ikayiHideBoot();
+  } catch (e) { window.__ikayiHideBoot(); }
+})();`,
           }}
         />
       </body>
@@ -159,7 +169,6 @@ function RootComponent() {
   }, [path]);
 
   useEffect(() => {
-    // Defer network work so the branded boot UI can paint first
     const send = async () => {
       await trackAppOpen();
       await maybeSendUsage();
