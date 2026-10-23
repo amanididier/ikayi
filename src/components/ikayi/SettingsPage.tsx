@@ -151,7 +151,7 @@ export function SettingsPage() {
             {t("logout")}
           </Button>
         )}
-        <Button type="button" variant="destructive" className="h-12 w-full rounded-full font-semibold" onClick={() => setReset(true)}>
+        <Button type="button" variant="destructive" className="h-12 w-full rounded-full font-semibold text-white" onClick={() => setReset(true)}>
           <Trash2 className="size-4" />
           {t("reset")}
         </Button>
@@ -194,7 +194,7 @@ export function SettingsPage() {
             <Button
               variant="destructive"
               disabled={busy}
-              className="h-12 w-full rounded-full font-semibold"
+              className="h-12 w-full rounded-full font-semibold text-white"
               onClick={async () => {
                 setBusy(true);
                 try {
