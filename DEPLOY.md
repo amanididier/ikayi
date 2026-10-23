@@ -10,6 +10,8 @@ VITE_SUPABASE_URL=https://YOUR-PROJECT.supabase.co
 VITE_SUPABASE_ANON_KEY=your-anon-key
 ```
 
+Use the **Ikayi** project (not an old Stoke project). Code fallback in `src/lib/supabase.ts` should match the same project.
+
 ## Supabase setup
 
 1. SQL Editor → run `supabase/schema.sql`
@@ -26,16 +28,13 @@ Primary download (website + Actions release):
 
 Welcome page (`/welcome`) uses that URL for **Shyiramo app**.
 
-## App icons / splash (native)
+### Capacitor / system splash (saved playbook)
 
-`npx cap add android` may create default Capacitor icons. This repo prepares icons in CI with Pillow from `src/assets/ikayi-logo.png`. To regenerate locally:
+If the APK shows a **Capacitor** logo for a second on cold start, see:
 
-```
-# optional — only if you need @capacitor/assets (needs sharp)
-npx cap sync android
-```
+**→ [`docs/ANDROID_LAUNCH_FIX.md`](docs/ANDROID_LAUNCH_FIX.md)**
 
-Rebuild the APK via **Actions → Android offline build**, or Android Studio. If an old icon still shows, uninstall once and reinstall.
+Summary: after `cap sync` + Ikayi icons, run `npm run android:fix-startup` (already in CI on `main`), rebuild APK, **uninstall** old app, install new one.
 
 ## Usage analytics (owner only)
 
