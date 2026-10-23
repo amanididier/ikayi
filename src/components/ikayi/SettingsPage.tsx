@@ -10,6 +10,15 @@ import { fullSync } from "@/lib/sync";
 import { supabaseConfigured } from "@/lib/supabase";
 
 const LAST_SYNC_KEY = "ikayi-last-sync-at";
+const AUTO_SYNC_KEY = "ikayi-sync-mode";
+
+function readAutoSync(): boolean {
+  try {
+    return localStorage.getItem(AUTO_SYNC_KEY) === "auto";
+  } catch {
+    return false;
+  }
+}
 
 function readLastSync(): number | null {
   try {
@@ -39,7 +48,7 @@ export function SettingsPage() {
   const [lastSync, setLastSync] = useState<number | null>(null);
   const [reset, setReset] = useState(false);
   const [busy, setBusy] = useState(false);
-  const [autoSync, setAutoSync] = useState(() => localStorage.getItem("ikayi-sync-mode") === "auto");
+  const [autoSync, setAutoSync] = useState(readAutoSync);
 
   useEffect(() => {
     setOnline(navigator.onLine);
@@ -108,7 +117,11 @@ export function SettingsPage() {
             onChange={(e) => {
               const on = e.target.checked;
               setAutoSync(on);
-              localStorage.setItem("ikayi-sync-mode", on ? "auto" : "manual");
+              try {
+                localStorage.setItem(AUTO_SYNC_KEY, on ? "auto" : "manual");
+              } catch {
+                /* Storage can be unavailable in restricted browser contexts. */
+              }
             }}
           />
           {t("autoSync")}

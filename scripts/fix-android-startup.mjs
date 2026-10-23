@@ -20,7 +20,7 @@ export function fixAndroidStartup(root = process.cwd()) {
   const stylePattern = new RegExp(`<style\\b(?=[^>]*\\bname="${escaped}")[^>]*>[\\s\\S]*?<\\/style>`);
   const original = base.match(stylePattern)?.[0];
   if (!original) throw new Error(`Launch theme ${theme} not found in values/styles.xml; no resources changed.`);
-  const blank = '@drawable/ikayi_startup_blank';
+  const icon = '@drawable/ikayi_startup_icon';
   const background = '@color/ikayi_startup_background';
   function patchStyle(style, platform = false) {
     const items = {
@@ -29,12 +29,12 @@ export function fixAndroidStartup(root = process.cwd()) {
     };
     if (/Theme\.SplashScreen/.test(style) || /name="windowSplashScreen/.test(style)) {
       items.windowSplashScreenBackground = background;
-      items.windowSplashScreenAnimatedIcon = blank;
+      items.windowSplashScreenAnimatedIcon = icon;
       items.windowSplashScreenAnimationDuration = '0';
     }
     if (platform) {
       items['android:windowSplashScreenBackground'] = background;
-      items['android:windowSplashScreenAnimatedIcon'] = blank;
+      items['android:windowSplashScreenAnimatedIcon'] = icon;
       items['android:windowSplashScreenAnimationDuration'] = '0';
       items['android:windowSplashScreenIconBackgroundColor'] = background;
     }
@@ -57,7 +57,11 @@ export function fixAndroidStartup(root = process.cwd()) {
   const v31 = fs.existsSync(v31Path) ? fs.readFileSync(v31Path, 'utf8') : '<?xml version="1.0" encoding="utf-8"?>\n<resources>\n</resources>\n';
   if (!stylePattern.test(v31)) changes.push([v31Path, v31.replace('</resources>', `${patchStyle(original, true)}\n</resources>`)]);
   changes.push([path.join(res, 'values/ikayi_startup.xml'), '<?xml version="1.0" encoding="utf-8"?>\n<resources><color name="ikayi_startup_background">#FAF8F5</color></resources>\n']);
-  changes.push([path.join(res, 'drawable/ikayi_startup_blank.xml'), '<?xml version="1.0" encoding="utf-8"?>\n<shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="rectangle"><size android:width="1dp" android:height="1dp"/><solid android:color="@android:color/transparent"/></shape>\n']);
+  const iconSource = path.join(root, 'assets/icon-foreground.png');
+  const iconTarget = path.join(res, 'drawable-nodpi/ikayi_startup_icon.png');
+  if (!fs.existsSync(iconSource)) throw new Error('Missing branded Android splash icon: assets/icon-foreground.png');
+  fs.mkdirSync(path.dirname(iconTarget), { recursive: true });
+  fs.copyFileSync(iconSource, iconTarget);
   for (const [target, content] of changes) {
     fs.mkdirSync(path.dirname(target), { recursive: true });
     fs.writeFileSync(target, content);
