@@ -1,37 +1,35 @@
 # Android launch fix (no Capacitor splash logo)
 
-**Status:** Saved from Lovable + refined Oct 2026. Reuse on every APK build.
+**Canonical source:** `lovable-sync` → `scripts/fix-android-startup.mjs` (copied to `main`).
 
-## Problems we solved
+## What Lovable did (only this)
 
-1. **Capacitor logo** on cold start (Android 12+ system splash icon).
-2. **Blank white gap** before the in-app loading screen (plain cream theme + late React paint).
+After `npx cap add android` + `npx cap sync android` + Ikayi icons:
 
-## Rules (never reverse these)
+```bash
+npm run android:fix-startup
+```
 
-| Do | Don’t |
-|----|--------|
-| `windowSplashScreenAnimatedIcon` = **transparent blank** drawable | Put Cap logo or default splash icon back |
-| `windowBackground` = **`@drawable/splash`** (Ikayi logo on cream) | Solid white / only a color with no logo |
-| HTML `#ikayi-boot` in `__root` until Shell mounts | Return `null` from `/` while deciding app mode |
-| Defer `fullSync` a few hundred ms | Block first paint on network |
-| Uninstall old APK before testing | Expect website deploy alone to fix native splash |
+That script:
 
-## Pipeline (CI on `main`)
+1. Finds the MAIN/LAUNCHER activity theme
+2. Sets **windowBackground** to cream `#FAF8F5` (`@color/ikayi_startup_background`)
+3. Sets **windowSplashScreenAnimatedIcon** to a **1×1 transparent** drawable (`@drawable/ikayi_startup_blank`)
+4. Sets splash animation duration to **0**
+5. **Does not** change home-screen launcher icons
 
-1. `npm run build:native`
-2. `npx cap add android` + `npx cap sync android`
-3. Pillow: write Ikayi icons + **`drawable/splash.png`** (logo on `#FAF8F5`)
-4. `npm run android:fix-startup` → patches launch theme only (see `scripts/fix-android-startup.mjs`)
-5. `./gradlew assembleDebug` → publish `android-latest`
-
-## Web handoff
-
-- `__root.tsx` paints **#ikayi-boot** (cream + favicon + “Ikayi Yange”) before React is ready.
-- `Shell` calls `window.__ikayiHideBoot()` as soon as the branded React loader mounts.
+CI on `main` must run this **before** `./gradlew assembleDebug`, and also force styles so Cap never wins (see workflow “Force Ikayi launch styles”).
 
 ## After install
 
-1. Uninstall old app  
-2. Install: `https://github.com/amanididierprofessional/ikayi/releases/download/android-latest/ikayi-yange.apk`  
-3. Cold start — should see **Ikayi** branding the whole time, never Cap, never empty white.
+Uninstall old APK → install from `android-latest` → cold start.
+
+## APK file size
+
+~5–6 MB debug APK is **normal**. Size does **not** mean Capacitor logo is present. Logo is controlled by native theme XML, not by being a few hundred KB larger.
+
+## Do not
+
+- Point `windowSplashScreenAnimatedIcon` at Cap defaults or `@mipmap/ic_launcher_foreground` for the system splash
+- Skip `android:fix-startup` in CI
+- Expect a website-only deploy to fix native splash
