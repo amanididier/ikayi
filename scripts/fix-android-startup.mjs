@@ -3,6 +3,8 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 // Patch only the launch theme: never touch launcher/adaptive icon resources.
+// windowBackground = @drawable/splash (Ikayi logo on cream) so there is no blank white gap.
+// windowSplashScreenAnimatedIcon = transparent blank so Capacitor logo never returns.
 export function fixAndroidStartup(root = process.cwd()) {
   const main = path.join(root, 'android/app/src/main');
   const manifestPath = path.join(main, 'AndroidManifest.xml');
@@ -20,22 +22,23 @@ export function fixAndroidStartup(root = process.cwd()) {
   const original = base.match(stylePattern)?.[0];
   if (!original) throw new Error('Launch theme ' + theme + ' not found in values/styles.xml; no resources changed.');
   const blank = '@drawable/ikayi_startup_blank';
-  const background = '@color/ikayi_startup_background';
+  const splashDrawable = '@drawable/splash';
+  const bgColor = '@color/ikayi_startup_background';
   function patchStyle(style, platform = false) {
     const items = {
-      'android:windowBackground': background,
+      'android:windowBackground': splashDrawable,
       'android:windowIsTranslucent': 'false',
     };
     if (/Theme\.SplashScreen/.test(style) || /name="windowSplashScreen/.test(style)) {
-      items.windowSplashScreenBackground = background;
+      items.windowSplashScreenBackground = bgColor;
       items.windowSplashScreenAnimatedIcon = blank;
       items.windowSplashScreenAnimationDuration = '0';
     }
     if (platform) {
-      items['android:windowSplashScreenBackground'] = background;
+      items['android:windowSplashScreenBackground'] = bgColor;
       items['android:windowSplashScreenAnimatedIcon'] = blank;
       items['android:windowSplashScreenAnimationDuration'] = '0';
-      items['android:windowSplashScreenIconBackgroundColor'] = background;
+      items['android:windowSplashScreenIconBackgroundColor'] = bgColor;
     }
     for (const [name, value] of Object.entries(items)) {
       const pattern = new RegExp('<item\\s+name="' + name + '"[^>]*>[\\s\\S]*?<\\/item>');
