@@ -128,11 +128,6 @@ function WelcomePage() {
   }, [navigate]);
 
   useEffect(() => {
-    const saved = localStorage.getItem("iy-lang");
-    if (saved === "en" || saved === "rw") setLang(saved);
-  }, []);
-
-  useEffect(() => {
     localStorage.setItem("iy-lang", lang);
     document.documentElement.lang = lang;
   }, [lang]);
