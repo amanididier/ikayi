@@ -178,6 +178,9 @@ jobs:
           (values / "styles.xml").write_text(styles)
           PY
 
+      - name: Patch Android launch theme (no Capacitor splash logo)
+        run: npm run android:fix-startup
+
       - name: Verify Ikayi native branding assets
         run: |
           test -s android/app/src/main/res/drawable/splash.png
