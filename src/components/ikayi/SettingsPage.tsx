@@ -1,108 +1,117 @@
-import { useEffect, useState } from "react";
-import { Cloud, LogOut, MessageCircle, Phone, RefreshCw, ShieldCheck, Trash2 } from "lucide-react";
+import { useCallback, useEffect, useState } from "react";
+import { Cloud, CloudOff, LogOut, MessageCircle, Phone, ShieldCheck, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Drawer, DrawerContent, DrawerDescription, DrawerHeader, DrawerTitle } from "@/components/ui/drawer";
 import { clearDevice } from "@/lib/credit-db";
-import { getAccount, signOutLocal } from "@/lib/auth";
-import { supabaseConfigured } from "@/lib/supabase";
-import { fullSync } from "@/lib/sync";
 import { useI18n } from "@/lib/i18n";
+import { isLoggedIn, signOut } from "@/lib/auth";
+import { fullSync, getLastSyncAt } from "@/lib/sync";
+import { supabaseConfigured } from "@/lib/supabase";
 
 export function SettingsPage() {
-  const { lang, t } = useI18n();
+  const { t, lang } = useI18n();
   const rw = lang === "rw";
+  const [online, setOnline] = useState(true);
+  const [authed, setAuthed] = useState(false);
+  const [syncing, setSyncing] = useState(false);
+  const [lastSync, setLastSync] = useState<number | null>(null);
   const [reset, setReset] = useState(false);
   const [busy, setBusy] = useState(false);
-  const [syncing, setSyncing] = useState(false);
-  const [auto, setAuto] = useState(() => localStorage.getItem("ikayi-sync-mode") === "auto");
-  const account = typeof window !== "undefined" ? getAccount() : null;
+  const [autoSync, setAutoSync] = useState(() => localStorage.getItem("ikayi-sync-mode") === "auto");
 
   useEffect(() => {
-    localStorage.setItem("ikayi-sync-mode", auto ? "auto" : "manual");
-  }, [auto]);
+    setOnline(navigator.onLine);
+    const u = () => setOnline(navigator.onLine);
+    window.addEventListener("online", u);
+    window.addEventListener("offline", u);
+    return () => {
+      window.removeEventListener("online", u);
+      window.removeEventListener("offline", u);
+    };
+  }, []);
 
-  const syncNow = async () => {
+  useEffect(() => {
+    void isLoggedIn().then(setAuthed);
+    setLastSync(getLastSyncAt());
+  }, []);
+
+  const doSync = useCallback(async () => {
+    if (!supabaseConfigured) {
+      toast.error(rw ? "Cloud ntateguye" : "Cloud not configured");
+      return;
+    }
+    if (!navigator.onLine) {
+      toast.error(rw ? "Nta murandasi" : "You are offline");
+      return;
+    }
     setSyncing(true);
     try {
-      if (!supabaseConfigured) {
-        toast.message(rw ? "Shyiramo VITE_SUPABASE_URL n'ANON_KEY kuri Vercel" : "Set VITE_SUPABASE_URL and ANON_KEY on Vercel");
-        return;
-      }
-      if (!navigator.onLine) {
-        toast.error(rw ? "Nta interineti" : "You are offline");
-        return;
-      }
-      const result = await fullSync();
-      if (result.ok) {
-        toast.success(rw ? "Amadeni yahujwe (upload + download)" : "Credits synced (upload + download)");
-      } else if (result.reason === "no_session") {
-        toast.message(rw ? "Injira mbere yo gukora sync" : "Sign in before syncing");
-      } else {
-        toast.error(rw ? `Sync yanze: ${result.reason}` : `Sync failed: ${result.reason}`);
-      }
+      await fullSync();
+      setLastSync(getLastSyncAt());
+      toast.success(t("syncDone"));
+    } catch (e) {
+      console.error(e);
+      toast.error(rw ? "Sync yananiwe" : "Sync failed");
     } finally {
       setSyncing(false);
     }
-  };
-
-  const logout = async () => {
-    await signOutLocal();
-    sessionStorage.removeItem("ikayi-device-mode");
-    toast.success(rw ? "Wasohotse" : "Signed out");
-    window.location.assign("/");
-  };
+  }, [rw, t]);
 
   return (
-    <div className="space-y-5 pb-8">
-      <div className="pt-2">
-        <p className="mb-1 text-xs font-medium text-muted-foreground">{t("settings")}</p>
-        <h2 className="text-2xl font-bold">{rw ? "Igenamiterere" : "Settings"}</h2>
-        {account && <p className="mt-1 truncate text-xs text-muted-foreground">{account.identifier}</p>}
-      </div>
-
-      <section className="rounded-2xl border bg-card p-4 shadow-card">
-        <div className="mb-3 flex items-center gap-3">
-          <span className="grid size-10 place-items-center rounded-xl bg-primary/10 text-primary">
-            <Cloud className="size-5" />
-          </span>
-          <div className="min-w-0 flex-1">
-            <h3 className="text-base font-bold">{rw ? "Guhuza amakuru kuri murandasi" : "Cloud Sync"}</h3>
-            <p className="text-xs text-muted-foreground">
-              {supabaseConfigured
-                ? rw
-                  ? "Upload + download amadeni kuri telefone zose za konti."
-                  : "Upload + download credits on every phone for this account."
-                : rw
-                  ? "Shyiramo VITE_SUPABASE_URL n'ANON_KEY kuri Vercel."
-                  : "Set VITE_SUPABASE_URL and ANON_KEY on Vercel."}
-            </p>
-          </div>
+    <div className="space-y-5 px-1">
+      <section className="rounded-2xl bg-card p-4 shadow-card">
+        <div className="mb-3 flex items-center gap-2">
+          {online ? <Cloud className="size-5 text-primary" /> : <CloudOff className="size-5 text-muted-foreground" />}
+          <h2 className="font-bold">{t("cloudSync")}</h2>
         </div>
-        <div className="flex flex-wrap gap-2">
-          <Button disabled={syncing} className="h-10 rounded-full" onClick={() => void syncNow()}>
-            <RefreshCw className={`size-3.5 ${syncing ? "animate-spin" : ""}`} />
-            {rw ? "Huza amakuru" : "Sync"}
-          </Button>
-          <Button
-            variant={auto ? "default" : "outline"}
-            className="h-10 rounded-full"
-            onClick={() => {
-              setAuto((v) => !v);
-              toast.success(auto ? (rw ? "Auto-sync yahagaritswe" : "Auto-sync off") : rw ? "Auto-sync yashyizweho" : "Auto-sync on");
+        <p className="mb-3 text-xs text-muted-foreground">
+          {online
+            ? rw
+              ? "Uri online. Sync ishyira amakuru yawe mu cloud."
+              : "You are online. Sync uploads and downloads your credit book."
+            : rw
+              ? "Nta murandasi. Amakuru agumana kuri iyi telefone."
+              : "Offline. Data stays on this phone until you sync."}
+        </p>
+        <label className="mb-3 flex items-center gap-2 text-sm">
+          <input
+            type="checkbox"
+            checked={autoSync}
+            onChange={(e) => {
+              const on = e.target.checked;
+              setAutoSync(on);
+              localStorage.setItem("ikayi-sync-mode", on ? "auto" : "manual");
             }}
-          >
-            {auto ? (rw ? "Byikora" : "Auto") : (rw ? "Intoki" : "Manual")}
-          </Button>
-        </div>
+          />
+          {t("autoSync")}
+        </label>
+        <Button className="h-12 w-full rounded-full" disabled={syncing || !online} onClick={() => void doSync()}>
+          {syncing ? (rw ? "Birimo…" : "Syncing…") : t("syncNow")}
+        </Button>
+        {lastSync ? (
+          <p className="mt-2 text-center text-[11px] text-muted-foreground">
+            {rw ? "Sync iheruka" : "Last sync"}: {new Date(lastSync).toLocaleString()}
+          </p>
+        ) : null}
       </section>
 
       <div className="space-y-2">
-        <Button variant="secondary" className="h-12 w-full rounded-full" onClick={() => void logout()}>
-          <LogOut className="size-4" />
-          {t("logout")}
-        </Button>
-        <Button variant="destructive" className="h-12 w-full rounded-full" onClick={() => setReset(true)}>
+        {authed && (
+          <Button
+            variant="outline"
+            className="h-12 w-full rounded-full"
+            onClick={async () => {
+              await signOut();
+              sessionStorage.removeItem("ikayi-device-mode");
+              window.location.reload();
+            }}
+          >
+            <LogOut className="size-4" />
+            {t("logout")}
+          </Button>
+        )}
+        <Button type="button" variant="destructive" className="h-12 w-full rounded-full font-semibold" onClick={() => setReset(true)}>
           <Trash2 className="size-4" />
           {t("reset")}
         </Button>
@@ -112,10 +121,16 @@ export function SettingsPage() {
         <p className="mb-3 text-center text-xs text-muted-foreground">{t("contactDev")}</p>
         <div className="flex justify-center gap-3">
           <Button asChild variant="outline" className="rounded-full">
-            <a href="tel:0796919900"><Phone className="size-4" />{rw ? "Hamagara" : "Call"}</a>
+            <a href="tel:0796919900">
+              <Phone className="size-4" />
+              {rw ? "Hamagara" : "Call"}
+            </a>
           </Button>
-          <Button asChild className="rounded-full bg-success text-success-foreground hover:bg-success/90">
-            <a href="https://wa.me/250796919900" target="_blank" rel="noreferrer"><MessageCircle className="size-4" />WhatsApp</a>
+          <Button asChild variant="outline" className="rounded-full border-success/40 text-success hover:bg-success/10">
+            <a href="https://wa.me/250796919900" target="_blank" rel="noreferrer">
+              <MessageCircle className="size-4" />
+              WhatsApp
+            </a>
           </Button>
         </div>
       </section>
@@ -139,7 +154,7 @@ export function SettingsPage() {
             <Button
               variant="destructive"
               disabled={busy}
-              className="h-12 w-full rounded-full"
+              className="h-12 w-full rounded-full font-semibold"
               onClick={async () => {
                 setBusy(true);
                 try {
