@@ -5,9 +5,30 @@ import { Button } from "@/components/ui/button";
 import { Drawer, DrawerContent, DrawerDescription, DrawerHeader, DrawerTitle } from "@/components/ui/drawer";
 import { clearDevice } from "@/lib/credit-db";
 import { useI18n } from "@/lib/i18n";
-import { isLoggedIn, signOut } from "@/lib/auth";
-import { fullSync, getLastSyncAt } from "@/lib/sync";
+import { isLoggedIn, signOutLocal } from "@/lib/auth";
+import { fullSync } from "@/lib/sync";
 import { supabaseConfigured } from "@/lib/supabase";
+
+const LAST_SYNC_KEY = "ikayi-last-sync-at";
+
+function readLastSync(): number | null {
+  try {
+    const v = localStorage.getItem(LAST_SYNC_KEY);
+    if (!v) return null;
+    const n = Number(v);
+    return Number.isFinite(n) ? n : null;
+  } catch {
+    return null;
+  }
+}
+
+function writeLastSync(ts: number) {
+  try {
+    localStorage.setItem(LAST_SYNC_KEY, String(ts));
+  } catch {
+    /* */
+  }
+}
 
 export function SettingsPage() {
   const { t, lang } = useI18n();
@@ -33,7 +54,7 @@ export function SettingsPage() {
 
   useEffect(() => {
     void isLoggedIn().then(setAuthed);
-    setLastSync(getLastSyncAt());
+    setLastSync(readLastSync());
   }, []);
 
   const doSync = useCallback(async () => {
@@ -47,8 +68,14 @@ export function SettingsPage() {
     }
     setSyncing(true);
     try {
-      await fullSync();
-      setLastSync(getLastSyncAt());
+      const res = await fullSync();
+      if (!res.ok) {
+        toast.error(rw ? `Sync yananiwe: ${res.reason}` : `Sync failed: ${res.reason}`);
+        return;
+      }
+      const now = Date.now();
+      writeLastSync(now);
+      setLastSync(now);
       toast.success(t("syncDone"));
     } catch (e) {
       console.error(e);
@@ -102,7 +129,7 @@ export function SettingsPage() {
             variant="outline"
             className="h-12 w-full rounded-full"
             onClick={async () => {
-              await signOut();
+              await signOutLocal();
               sessionStorage.removeItem("ikayi-device-mode");
               window.location.reload();
             }}
