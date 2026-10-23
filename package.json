@@ -14,7 +14,9 @@
     "lint": "eslint .",
     "format": "prettier --write .",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "android:fix-startup": "node scripts/fix-android-startup.mjs",
+    "capacitor:sync:after": "node scripts/fix-android-startup.mjs --if-present"
   },
   "overrides": {
     "rolldown": "1.2.1"
