@@ -34,7 +34,7 @@ export function Shell({ children }: { children: ReactNode }) {
     let cancelled = false;
     void isLoggedIn().then((ok) => {
       if (!cancelled) {
-        setAuthed(ok);
+        setAuthed(ok || sessionStorage.getItem("ikayi-device-mode") === "1");
         setChecking(false);
       }
     });
