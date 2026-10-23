@@ -35,20 +35,29 @@ After a successful Actions build on `main`:
 
 Welcome page download button uses that URL.
 
-## Fix: app shows the Capacitor logo instead of the Ikayi logo
+## Fix: Capacitor screen appears before Ikayi loads
 
-`npx cap add android` creates the default Capacitor icon and splash. Replace
-them with the Ikayi assets already in this repo (`assets/` folder):
+The home-screen logo is already correct. Do not regenerate launcher icons.
+The unwanted white screen is Android's native launch theme, before the web app
+can render. `launchShowDuration: 0` alone cannot remove Android 12's system icon.
+The guarded startup patch changes only launch-theme resources, leaving all
+launcher icons and the existing Ikayi loading page untouched.
+
+In the repository that builds your APK, include `scripts/fix-android-startup.mjs`
+and the updated package scripts. After the Android project exists, run:
 
 ```
-npm install -D @capacitor/assets
-npx @capacitor/assets generate --android
 npx cap sync android
+npm run android:fix-startup
 ```
 
-Then rebuild the APK/AAB in Android Studio (or rerun the GitHub Actions
-build). If an old icon still shows on your phone after updating, uninstall
-the app once and reinstall — Android caches launcher icons.
+Then rebuild the APK/AAB and install that update. For GitHub Actions, run the
+patch after `cap add`, `cap sync`, and any asset generation, but before Gradle.
+The `capacitor:sync:after` hook also reapplies it on future syncs. Android still
+requires a short system launch background; its icon is made transparent so
+the Capacitor mark never appears. An already installed APK cannot be changed
+by updating the website. Native files are generated outside this preview, so
+validate the rebuilt APK with a cold launch on Android 12+ and an older Android.
 
 ## Usage analytics (owner only)
 
