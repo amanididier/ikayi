@@ -75,8 +75,10 @@ describe("daily upload", () => {
     const res = await uploadUsage(client, "user-1", T0);
     expect(res.ok).toBe(true);
     expect(calls).toHaveLength(1);
-    expect(calls[0]!.rows).toHaveLength(2);
-    const home = calls[0]!.rows.find((r) => (r as { path: string }).path === "/") as { views: number; user_id: string };
+    const call = calls[0];
+    if (!call) throw new Error("Expected an upload");
+    expect(call.rows).toHaveLength(2);
+    const home = call.rows.find((r) => (r as { path: string }).path === "/") as { views: number; user_id: string };
     expect(home.views).toBe(2);
     expect(home.user_id).toBe("user-1");
     // Nothing left to report for today, so a second upload sends no rows.
@@ -90,8 +92,8 @@ describe("daily upload", () => {
     await uploadUsage(client, "user-1", T0);
     const rows = await db.usage.toArray();
     expect(rows).toHaveLength(1);
-    expect(rows[0].date).toBe(dayKey(T0));
-    expect(rows[0].reported).toBe(1);
+    expect(rows[0]?.date).toBe(dayKey(T0));
+    expect(rows[0]?.reported).toBe(1);
   });
 
   it("reports an error when the cloud rejects the upload", async () => {
@@ -103,5 +105,22 @@ describe("daily upload", () => {
     expect(res).toEqual({ ok: false, reason: "denied" });
     // Data stays pending so the next online moment retries.
     expect(pendingDeltas(await db.usage.toArray())).toHaveLength(1);
+  });
+
+  it("preserves yesterday's activity recorded while an upload is in flight", async () => {
+    await trackPageView("/", T0 - DAY);
+    const client: UsageUploader = {
+      from: () => ({ upsert: async () => {
+        await trackPageView("/", T0 - DAY);
+        return { error: null };
+      } }),
+    };
+    await uploadUsage(client, "user-1", T0);
+    expect(await db.usage.get([dayKey(T0 - DAY), "/"])).toMatchObject({ views: 2, reported: 1 });
+  });
+
+  it("does not lose simultaneous page visits", async () => {
+    await Promise.all(Array.from({ length: 10 }, () => trackPageView("/", T0)));
+    expect((await db.usage.get([dayKey(T0), "/"]))?.views).toBe(10);
   });
 });

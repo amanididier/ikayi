@@ -1,8 +1,10 @@
 # Tasks
+- [x] Supply a guarded native startup patch preserving launcher logo; automated native resource checks pass.
+- [ ] Validate installed Android cold startup — blocked until the APK builder runs the patch and supplies a rebuilt APK/device check.
+- [x] Verify daily activity reporting and manual credit sync logic; fix races and sync-time loss; document live-service limitations.
 - [x] Refine the chosen Option 2 logo with centered generic cash notes and a left-side pen; inspect and deliver.
 - [x] Build the separate Ikayi credit pages and settings from the attached brief, using Stoke Yange as reference only; leave Stoke Yange unchanged.
 - [x] Improve indexed credit reads and balance aggregation; verify adding credit, payment, persistence, navigation and device reset, with seven passing tests.
-- [ ] Fix Capacitor icon/splash so the Android build shows the Ikayi logo, not the default Capacitor one (assets + generator steps in DEPLOY.md).
-- [ ] Redesign logo: remove pen and loose cash; keep agenda with a centered minimal rounded wallet with cash moving in/out, fitted neatly (ref: uploaded wallet image).
-- [ ] Add usage analytics: local daily activity log (pages, opens), uploaded once per day when online, plus an /admin route listing users and page usage; separate from credit sync.
-- [ ] Activate real login, signup and cloud sync — blocked until the user connects their existing account service in project settings.
+- [x] Preserve approved launcher logo; existing agenda/wallet logo is already in use.
+- [x] Add local daily activity logging and owner /admin screen, separate from credit sync; verify once-per-day logic.
+- [ ] Verify live authenticated credit/analytics saves and admin access — external account service is reachable, but no authenticated session is available here.

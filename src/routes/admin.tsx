@@ -22,6 +22,10 @@ export const Route = createFileRoute("/admin")({
     meta: [
       { title: "Ikayi — Admin" },
       { name: "description", content: "Ikayi usage analytics for the app owner." },
+      { property: "og:title", content: "Ikayi — Admin" },
+      { property: "og:description", content: "Private Ikayi activity summary for the app owner." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
       { name: "robots", content: "noindex" },
     ],
   }),

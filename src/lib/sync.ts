@@ -26,7 +26,9 @@ export async function fullSync(): Promise<SyncResult> {
 
   const push = await pushCredit(userId);
   if (!push.ok) return push;
-  return pullCredit(userId, { force: true });
+  // Merge remote-only entries rather than clearing the device: users may keep
+  // recording credits while the network requests are running.
+  return pullCredit(userId);
 }
 
 export async function pushCredit(userId?: string): Promise<SyncResult> {

@@ -52,8 +52,10 @@ export function pendingDeltas(rows: UsageRow[]): (UsageRow & { delta: number })[
 
 async function bump(path: string, now: number): Promise<void> {
   const date = dayKey(now);
-  const row = await db.usage.get([date, path]);
-  await db.usage.put({ date, path, views: (row?.views ?? 0) + 1, reported: row?.reported ?? 0 });
+  await db.transaction("rw", db.usage, async () => {
+    const row = await db.usage.get([date, path]);
+    await db.usage.put({ date, path, views: (row?.views ?? 0) + 1, reported: row?.reported ?? 0 });
+  });
 }
 
 export async function trackPageView(path: string, now = Date.now()): Promise<void> {
@@ -97,8 +99,10 @@ export async function uploadUsage(
   const today = dayKey(now);
   await db.transaction("rw", db.usage, async () => {
     for (const r of rows) {
-      if (r.date < today) await db.usage.delete([r.date, r.path]);
-      else await db.usage.put({ ...r, reported: r.views });
+      const current = await db.usage.get([r.date, r.path]);
+      if (!current) continue;
+      if (r.date < today && current.views === r.views) await db.usage.delete([r.date, r.path]);
+      else await db.usage.put({ ...current, reported: r.views });
     }
   });
   return { ok: true };
@@ -113,7 +117,17 @@ export type SendResult =
  * activity at most once per local day; failed or offline attempts are not
  * counted, so the next online moment that day tries again.
  */
-export async function maybeSendUsage(now = Date.now()): Promise<SendResult> {
+let sending: Promise<SendResult> | undefined;
+
+export function maybeSendUsage(now = Date.now()): Promise<SendResult> {
+  if (sending) return sending;
+  sending = sendUsage(now).catch((error: unknown): SendResult => ({
+    ok: false, reason: error instanceof Error ? error.message : "upload_failed",
+  })).finally(() => { sending = undefined; });
+  return sending;
+}
+
+async function sendUsage(now: number): Promise<SendResult> {
   if (!shouldSendToday(localStorage.getItem(SENT_KEY), now)) return { ok: true, sent: false };
   if (!supabaseConfigured) return { ok: false, reason: "no_cloud" };
   if (typeof navigator !== "undefined" && !navigator.onLine) return { ok: false, reason: "offline" };

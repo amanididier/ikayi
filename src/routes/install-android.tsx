@@ -3,7 +3,14 @@ import { ArrowLeft, Download } from "lucide-react";
 
 export const Route = createFileRoute("/install-android")({
   head: () => ({
-    meta: [{ title: "Uko washyiramo Ikayi kuri Android" }],
+    meta: [
+      { title: "Uko washyiramo Ikayi kuri Android" },
+      { name: "description", content: "Manura Ikayi ushyire ikayi y'amadeni kuri Android." },
+      { property: "og:title", content: "Uko washyiramo Ikayi kuri Android" },
+      { property: "og:description", content: "Intambwe zo gushyira Ikayi kuri telefone ya Android." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
+    ],
   }),
   component: InstallAndroid,
 });

@@ -7,6 +7,10 @@ export const Route = createFileRoute("/welcome")({
     meta: [
       { title: "Ikayi | Ikayi y'amadeni yawe" },
       { name: "description", content: "Andika abakiriya barimo amadeni n'abo mubereyemo. Offline-first, cloud sync." },
+      { property: "og:title", content: "Ikayi | Ikayi y'amadeni yawe" },
+      { property: "og:description", content: "Ikayi y'amadeni n'ubwishyu kuri telefone yawe." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
     ],
   }),
   component: WelcomePage,

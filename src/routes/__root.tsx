@@ -16,6 +16,7 @@ import { reportLovableError } from "../lib/lovable-error-reporting";
 import { I18nProvider } from "@/lib/i18n";
 import { Toaster } from "@/components/ui/sonner";
 import { maybeSendUsage, trackAppOpen, trackPageView } from "@/lib/usage";
+import { ensureSupabase } from "@/lib/supabase";
 
 function NotFoundComponent() {
   return (
@@ -125,14 +126,32 @@ function RootComponent() {
 
   // Usage analytics: record page views locally, upload at most once per day when online.
   useEffect(() => {
-    void trackPageView(path);
+    void trackPageView(path).catch(() => {});
   }, [path]);
   useEffect(() => {
-    void trackAppOpen();
     const send = () => void maybeSendUsage();
-    send();
+    void trackAppOpen().then(send).catch(() => {});
+    const resume = () => { if (document.visibilityState === "visible") send(); };
+    // Also handles an app left open across midnight. The daily gate prevents repeat uploads.
+    const timer = window.setInterval(send, 60000);
+    let cancelled = false;
+    let unsubscribe: (() => void) | undefined;
+    void ensureSupabase().then((client) => {
+      if (cancelled || !client) return;
+      const { data } = client.auth.onAuthStateChange((event) => {
+        if (event === "SIGNED_IN") window.setTimeout(send, 0);
+      });
+      unsubscribe = () => data.subscription.unsubscribe();
+    });
     window.addEventListener("online", send);
-    return () => window.removeEventListener("online", send);
+    document.addEventListener("visibilitychange", resume);
+    return () => {
+      cancelled = true;
+      unsubscribe?.();
+      window.clearInterval(timer);
+      window.removeEventListener("online", send);
+      document.removeEventListener("visibilitychange", resume);
+    };
   }, []);
 
   return (
