@@ -60,11 +60,17 @@ export function CreditBook({ kind }: { kind: PartyKind }) {
   const filtered = useMemo(() => {
     if (!data) return [];
     const q = query.trim().toLowerCase();
+    const digits = q.replace(/\D/g, "");
     if (!q) return data;
     return data.filter(
-      (r) => r.p.name.toLowerCase().includes(q) || r.p.phone.includes(q),
+      (r) =>
+        r.p.name.toLowerCase().includes(q) ||
+        (digits && r.p.phone.replace(/\D/g, "").includes(digits)) ||
+        r.debts.some((d) => d.description?.toLowerCase().includes(q)),
     );
   }, [data, query]);
+
+  const total = useMemo(() => filtered.reduce((n, r) => n + r.balance, 0), [filtered]);
 
   const reminder = (party: Party, balance: number, via: "wa" | "sms") => {
     const phone = party.phone.replace(/\D/g, "").replace(/^0/, "250");
@@ -78,13 +84,7 @@ export function CreditBook({ kind }: { kind: PartyKind }) {
 
   return (
     <div className="space-y-3">
-      <div className="flex items-center justify-between gap-2">
-        <h2 className="text-lg font-bold">{t(kind === "customer" ? "owesMe" : "iOwe")}</h2>
-        <Button className="h-10 rounded-full" onClick={() => setForm({ type: "person" })}>
-          <Plus className="size-4" />
-          {t("addParty")}
-        </Button>
-      </div>
+      <h2 className="text-lg font-bold">{t(kind === "customer" ? "owesMe" : "iOwe")}</h2>
 
       <div className="relative">
         <Search className="pointer-events-none absolute left-3.5 top-4 size-4 text-muted-foreground" />
@@ -100,6 +100,19 @@ export function CreditBook({ kind }: { kind: PartyKind }) {
             <X />
           </Button>
         )}
+      </div>
+
+      <div className="flex items-center justify-between gap-2 rounded-2xl bg-ink p-4 text-ink-foreground">
+        <div className="min-w-0">
+          <p className="text-xs text-ink-foreground/70">
+            {query ? (rw ? `Ibisubizo (${filtered.length})` : `Results (${filtered.length})`) : t("total")}
+          </p>
+          <p className="mt-1 text-2xl font-bold tabular-nums">{fmt(total)}</p>
+        </div>
+        <Button className="h-10 shrink-0 rounded-full px-3 text-xs" onClick={() => setForm({ type: "person" })}>
+          <Plus className="size-4" />
+          {t("addParty")}
+        </Button>
       </div>
 
       {data === undefined ? (
@@ -181,8 +194,8 @@ export function CreditBook({ kind }: { kind: PartyKind }) {
                     </div>
                     {kind === "customer" && r.p.phone && (
                       <div className="flex gap-2">
-                        <Button variant="outline" className="flex-1 rounded-full text-success" onClick={() => reminder(r.p, r.balance, "wa")}><MessageCircle />WhatsApp</Button>
-                        <Button variant="outline" className="flex-1 rounded-full" onClick={() => reminder(r.p, r.balance, "sms")}><MessageSquare />SMS</Button>
+                        <Button type="button" variant="outline" className="h-11 flex-1 rounded-full border-success/40 text-success hover:bg-success/10" onClick={() => reminder(r.p, r.balance, "wa")}><MessageCircle className="size-4" />WhatsApp</Button>
+                        <Button type="button" variant="outline" className="h-11 flex-1 rounded-full" onClick={() => reminder(r.p, r.balance, "sms")}><MessageSquare className="size-4" />SMS</Button>
                       </div>
                     )}
                   </div>
@@ -212,7 +225,7 @@ export function CreditBook({ kind }: { kind: PartyKind }) {
               setBusy(true);
               try {
                 await deletePerson(removing.id);
-                try { await trackAction("person_deleted"); await maybeSendUsage(); } catch { /* Analytics must never block a local save. */ }
+                try { await trackAction("person_deleted"); await maybeSendUsage(); } catch { /* */ }
                 toast.success(rw ? "Byasibwe" : "Deleted"); setRemoving(null);
               }
               finally { setBusy(false); }
@@ -251,12 +264,11 @@ function CreditForm({ type, party, balance, kind, onDone }: { type: FormKind; pa
         } else if (type === "debt") await addDebt(party.id, n, desc, days);
         else await pay(party.id, n, date);
       }
-      // Log only the action category, never the party name, phone, amount, or description.
       const analyticsAction = type === "person"
         ? (kind === "customer" ? "customer_added" : "supplier_added")
         : type === "debt" ? "debt_added" : type === "payment" ? "payment_recorded" : null;
       if (analyticsAction) {
-        try { await trackAction(analyticsAction); await maybeSendUsage(); } catch { /* Analytics must never block a local save. */ }
+        try { await trackAction(analyticsAction); await maybeSendUsage(); } catch { /* */ }
       }
       if (localStorage.getItem("ikayi-sync-mode") === "auto" && navigator.onLine) {
         const syncResult = await pushCredit();
