@@ -22,6 +22,16 @@ export function Shell({ children }: { children: ReactNode }) {
     path.startsWith("/install-android/");
 
   useEffect(() => {
+    // Hand off from HTML boot splash to React branded loader (or app)
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (window as any).__ikayiHideBoot?.();
+    } catch {
+      /* */
+    }
+  }, []);
+
+  useEffect(() => {
     if (isAppMode()) enterAppMode();
   }, []);
 
@@ -39,20 +49,21 @@ export function Shell({ children }: { children: ReactNode }) {
   useEffect(() => {
     let cancelled = false;
     setStartupStage("checking");
-    void isLoggedIn().then((ok) => {
-      if (!cancelled) {
-        setAuthed(ok);
-        setStartupStage("ready");
-        setChecking(false);
-      }
-    }).catch(() => {
-      // A local auth lookup failure must never trap the user on the loading screen.
-      if (!cancelled) {
-        setAuthed(false);
-        setStartupStage("ready");
-        setChecking(false);
-      }
-    });
+    void isLoggedIn()
+      .then((ok) => {
+        if (!cancelled) {
+          setAuthed(ok);
+          setStartupStage("ready");
+          setChecking(false);
+        }
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setAuthed(false);
+          setStartupStage("ready");
+          setChecking(false);
+        }
+      });
     return () => {
       cancelled = true;
     };
@@ -75,9 +86,14 @@ export function Shell({ children }: { children: ReactNode }) {
   }
 
   if (checking) {
-    const status = startupStage === "opening"
-      ? (lang === "rw" ? "Turafungura Ikayi Yange…" : "Opening Ikayi Yange…")
-      : (lang === "rw" ? "Turategura amakuru yawe…" : "Getting your account ready…");
+    const status =
+      startupStage === "opening"
+        ? lang === "rw"
+          ? "Turafungura Ikayi Yange…"
+          : "Opening Ikayi Yange…"
+        : lang === "rw"
+          ? "Turategura amakuru yawe…"
+          : "Getting your account ready…";
 
     return (
       <main
@@ -91,7 +107,7 @@ export function Shell({ children }: { children: ReactNode }) {
           <h1 className="ikayi-startup-title">Ikayi Yange</h1>
           <p className="ikayi-startup-description">
             {lang === "rw"
-              ? "Ikayi y’amadeni n’ubwishyu bwawe."
+              ? "Ikayi y'amadeni n'ubwishyu bwawe."
               : "Your simple book for debts and payments."}
           </p>
           <div className="ikayi-startup-track" aria-hidden="true">
@@ -108,51 +124,66 @@ export function Shell({ children }: { children: ReactNode }) {
       <header className="app-header">
         <div className="flex min-w-0 items-center gap-3">
           <img src={logo} alt="" className="size-11 rounded-xl" />
-          <div>
-            <h1 className="text-xl font-bold">Ikayi Yange</h1>
-            <p className="flex items-center gap-1 text-[11px] text-muted-foreground">
-              {online ? <Wifi className="size-3 text-success" /> : <WifiOff className="size-3" />}
-              {t(online ? "online" : "offline")} · {lang === "rw" ? "Kuri iyi telefone" : "On this device"}
+          <div className="min-w-0">
+            <h1 className="truncate text-lg font-bold leading-tight">Ikayi Yange</h1>
+            <p className="text-[11px] text-muted-foreground">
+              {online ? (
+                <span className="inline-flex items-center gap-1">
+                  <Wifi className="size-3" />
+                  {lang === "rw" ? "Online" : "Online"}
+                </span>
+              ) : (
+                <span className="inline-flex items-center gap-1 text-amber-700">
+                  <WifiOff className="size-3" />
+                  {lang === "rw" ? "Nta murandasi" : "Offline"}
+                </span>
+              )}
             </p>
           </div>
         </div>
-        <Button
-          variant="outline"
-          className="h-9 gap-0 rounded-full bg-card p-0.5"
-          aria-label="Toggle language"
-          onClick={() => setLang(lang === "rw" ? "en" : "rw")}
-        >
-          <span className={`rounded-full px-2.5 py-1 text-[11px] ${lang === "en" ? "bg-primary text-primary-foreground" : ""}`}>EN</span>
-          <span className={`rounded-full px-2.5 py-1 text-[11px] ${lang === "rw" ? "bg-primary text-primary-foreground" : ""}`}>RW</span>
-        </Button>
+        <div className="flex items-center gap-1 rounded-full border bg-card p-0.5">
+          <button
+            type="button"
+            onClick={() => setLang("en")}
+            className={`rounded-full px-2.5 py-1 text-[11px] font-bold ${
+              lang === "en" ? "bg-primary text-primary-foreground" : "text-muted-foreground"
+            }`}
+          >
+            EN
+          </button>
+          <button
+            type="button"
+            onClick={() => setLang("rw")}
+            className={`rounded-full px-2.5 py-1 text-[11px] font-bold ${
+              lang === "rw" ? "bg-primary text-primary-foreground" : "text-muted-foreground"
+            }`}
+          >
+            RW
+          </button>
+        </div>
       </header>
 
-      <main className="px-4 pb-32 pt-3">{children}</main>
+      <div className="app-main">{authed ? children : <AuthCard onAuthed={onAuthed} onOffline={onOffline} />}</div>
 
-      <nav className="bottom-nav" aria-label={lang === "rw" ? "Paji" : "Main navigation"}>
-        {tabs.map(({ to, label, icon: Icon }) => {
-          const active = path === to;
-          return (
-            <Button
-              asChild
-              key={to}
-              variant="ghost"
-              className={`h-12 rounded-full ${
-                active
-                  ? "flex-[2] bg-primary px-4 text-primary-foreground hover:bg-primary/90"
-                  : "flex-1 text-ink-foreground/70 hover:bg-ink hover:text-ink-foreground"
-              }`}
-            >
-              <Link to={to} aria-label={label} aria-current={active ? "page" : undefined}>
-                <Icon className="size-5 shrink-0" strokeWidth={1.75} />
-                {active && <span className="truncate text-sm font-semibold">{label}</span>}
+      {authed && (
+        <nav className="app-bottom-nav" aria-label="Main">
+          {tabs.map(({ to, label, icon: Icon }) => {
+            const active = to === "/" ? path === "/" : path.startsWith(to);
+            return (
+              <Link
+                key={to}
+                to={to}
+                className={`flex flex-1 flex-col items-center gap-0.5 rounded-xl py-1.5 text-[10px] font-semibold ${
+                  active ? "text-primary" : "text-muted-foreground"
+                }`}
+              >
+                <Icon className="size-5" />
+                <span className="max-w-full truncate px-0.5">{label}</span>
               </Link>
-            </Button>
-          );
-        })}
-      </nav>
-
-      {!authed && <AuthCard onAuthed={onAuthed} onOffline={onOffline} />}
+            );
+          })}
+        </nav>
+      )}
     </div>
   );
 }
