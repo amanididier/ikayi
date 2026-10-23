@@ -20,11 +20,19 @@ export const Route = createFileRoute("/")({
 
 /**
  * Browser → /welcome marketing.
- * APK / PWA / Open app → credit book only (never marketing).
+ * APK / PWA / Open app → credit book (never marketing, never blank null).
  */
 function RootEntry() {
   const navigate = useNavigate();
-  const [showApp, setShowApp] = useState(() => isNativePlatform() || isAppMode());
+  // Default true when native/app so first paint is Shell loader, not white null
+  const [showApp, setShowApp] = useState(() => {
+    try {
+      if (typeof window === "undefined") return true;
+      return isNativePlatform() || isAppMode() || Capacitor.isNativePlatform();
+    } catch {
+      return true;
+    }
+  });
 
   useEffect(() => {
     if (typeof window !== "undefined" && window.location.hash.includes("type=recovery")) {
@@ -32,7 +40,6 @@ function RootEntry() {
       setShowApp(true);
       return;
     }
-    // Capacitor APK: always the app — never /welcome
     if (Capacitor.isNativePlatform() || isNativePlatform()) {
       enterAppMode();
       setShowApp(true);
@@ -43,6 +50,7 @@ function RootEntry() {
       setShowApp(true);
       return;
     }
+    setShowApp(false);
     navigate({ to: "/welcome", replace: true });
   }, [navigate]);
 
