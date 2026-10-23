@@ -16,7 +16,7 @@ vi.mock('@/lib/supabase', () => ({
       },
       select: () => ({ eq: async (_column: string, uid: string) => {
         if (table === 'parties') await fake.duringPull?.();
-        return { data: (fake.rows.get(table) ?? []).filter((row) => row.user_id === uid), error: null };
+        return { data: (fake.rows.get(table) ?? []).filter((row) => row['user_id'] === uid), error: null };
       } }),
     }),
   }),

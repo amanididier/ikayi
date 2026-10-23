@@ -68,3 +68,19 @@ validate the rebuilt APK with a cold launch on Android 12+ and an older Android.
 
 Each device records page views locally and uploads them at most once per day
 when it comes online. No credit, debtor or creditor data is tracked.
+
+Uploads run without blocking the app on start, sign-in, internet reconnection,
+and return to the app. While open, a local daily-gate check also handles midnight;
+it does not upload repeatedly. Failed attempts can retry. Later visits stay
+on-device until the next day's successful upload. This is not an OS background
+service: a fully closed/force-stopped app sends when it next opens online.
+
+## Verified here and remaining checks
+
+The configured account service is reachable and the profiles table responds.
+This preview has no signed-in session, so actual private credit/usage writes,
+permissions, and admin access have not been verified against your live account.
+Automated checks cover upload payloads, rejected uploads, daily gating, concurrent
+visits and retaining credits entered during sync. Sync currently upserts records;
+it does not propagate deletions or resolve conflicting edits from two devices.
+Do not switch accounts with another account's credit data still on this device.
