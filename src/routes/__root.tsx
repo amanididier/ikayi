@@ -111,43 +111,13 @@ function RootShell({ children }: { children: ReactNode }) {
         <HeadContent />
         <style
           dangerouslySetInnerHTML={{
-            __html: `
-html,body{margin:0;min-height:100%;background:#FAF8F5;color:#382B24}
-#ikayi-boot{position:fixed;inset:0;z-index:2147483646;display:flex;align-items:center;justify-content:center;background:#FAF8F5;font-family:system-ui,-apple-system,sans-serif}
-#ikayi-boot[data-done="1"]{display:none!important}
-#ikayi-boot .box{text-align:center;padding:24px}
-#ikayi-boot img{width:72px;height:72px;border-radius:18px;display:block;margin:0 auto}
-#ikayi-boot .t{margin:14px 0 0;font-size:1.15rem;font-weight:700;letter-spacing:-0.02em}
-#ikayi-boot .s{margin:8px 0 0;font-size:0.8rem;opacity:0.65}
-`,
+            __html: `html,body{margin:0;min-height:100%;background:#FAF8F5}`,
           }}
         />
       </head>
       <body>
-        <div id="ikayi-boot" role="status" aria-live="polite">
-          <div className="box">
-            <img src="/favicon.png" alt="" width={72} height={72} />
-            <p className="t">Ikayi Yange</p>
-            <p className="s">Tegereza…</p>
-          </div>
-        </div>
         {children}
         <Scripts />
-        <script
-          dangerouslySetInnerHTML={{
-            __html: `(function(){
-  window.__ikayiHideBoot=function(){var e=document.getElementById("ikayi-boot");if(e)e.setAttribute("data-done","1");};
-  // Marketing website (browser): remove boot immediately — only the APK needs the long boot.
-  try {
-    var ua = navigator.userAgent || "";
-    var native = /Capacitor/i.test(ua) || (window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform());
-    var path = (location.pathname || "");
-    var landing = path === "/welcome" || path.indexOf("/welcome/") === 0 || path === "/install-android" || path.indexOf("/install-android/") === 0;
-    if (!native || landing) window.__ikayiHideBoot();
-  } catch (e) { window.__ikayiHideBoot(); }
-})();`,
-          }}
-        />
       </body>
     </html>
   );
