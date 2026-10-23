@@ -67,6 +67,10 @@ const dict = {
   reversed: ["Reversed", "Byasubijwe"],
   online: ["Online", "Kuri murandasi"],
   offline: ["Offline", "Nta murandasi"],
+  cloudSync: ["Cloud sync", "Guhuza amakuru kuri cloud"],
+  autoSync: ["Sync automatically when online", "Guhuza amakuru byikora iyo ufite murandasi"],
+  syncNow: ["Sync now", "Huza amakuru ubu"],
+  syncDone: ["Sync completed", "Amakuru yahujwe neza"],
   pending: ["saved on this device", "bibitswe kuri aya makuru"],
   shopName: ["Shop name", "Izina ry'iduka"],
   currency: ["Currency", "Ifaranga"],
@@ -144,6 +148,8 @@ export function I18nProvider({ children }: { children: ReactNode }) {
   const setLang = (l: Lang) => setLangState(l);
   const t = (key: DictKey) => {
     const row = dict[key];
+    // A missing translation should never crash the whole route at runtime.
+    if (!row) return key;
     return lang === "en" ? row[0] : row[1];
   };
 
